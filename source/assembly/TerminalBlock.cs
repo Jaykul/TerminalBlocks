@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,18 +138,6 @@ namespace PoshCode
                 {
                     content = value;
                 }
-            }
-        }
-
-        /// <summary>
-        /// Gets the length of the text representation (without ANSI escape sequences).
-        /// </summary>
-        public int Length
-        {
-            get
-            {
-                var result = PoshCode.Pansies.Text.ConvertToString(Content, Separator.ToString());
-                return result != null ? _escapeCode.Replace(result, "").Length : 0;
             }
         }
 
