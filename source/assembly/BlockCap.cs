@@ -1,4 +1,5 @@
 using System;
+using System.Management.Automation;
 
 namespace PoshCode
 {
@@ -12,7 +13,7 @@ namespace PoshCode
         {
             FromPsMetadata(caps);
         }
-
+        public BlockCap(params object[] caps) : this(LanguagePrimitives.ConvertTo<string>(caps[0]), LanguagePrimitives.ConvertTo<string>(caps[1])) { }
         public BlockCap(string left, string right)
         {
             left = !String.IsNullOrEmpty(left) ? PoshCode.Pansies.Entities.Decode(left) : " ";
