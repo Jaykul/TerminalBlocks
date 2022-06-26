@@ -7,9 +7,13 @@ function Write-TerminalBlock {
         [switch]$NoCache
     )
     end {
-        [PoshCode.TerminalBlock]::LastSuccess = $?
+        # Stuff these into static properties in case I want to use them from C#
+        [PoshCode.TerminalBlock]::LastSuccess = $global:?
+        [PoshCode.TerminalBlock]::LastExitCode = $global:LASTEXITCODE
+
         $CacheKey = if ($NoCache) { [Guid]::NewGuid() } else { $MyInvocation.HistoryId }
 
+        # invoke them all, to find out if they have content
         $PromptErrors = [ordered]@{}
         for ($b = 0; $b -lt $Blocks.Count; $b++) {
             try {
@@ -18,38 +22,29 @@ function Write-TerminalBlock {
                 $PromptErrors.Add("$b { $($Blocks[$b].Content) }", $_)
             }
         }
-        -join @(
-            for ($b = 0; $b -lt $Blocks.Count; $b++) {
-                $Neighbor = @{}
-                $Block = $Blocks[$b]
 
-                $n = $b
-                # If this is not a spacer, it should use the color of the next non-empty block
-                while(++$n -lt $Blocks.Count) {
-                    if ($Block.Alignment -ne $Blocks[$n].Alignment) {
-                        Write-Verbose "For $b ($($Block.Content)), there's no neighbor"
-                        break;
-                    }
-                    if ($Blocks[$n].Cache) {
-                        Write-Verbose "For $b, the neighbor is $n"
-                        $Neighbor = $Blocks[$n]
-                        break;
-                    }
-                }
+        # now output them all
+        $result = [System.Text.StringBuilder]::new()
+        for ($b = 0; $b -lt $Blocks.Count; $b++) {
+            $Neighbor = @{}
+            $Block = $Blocks[$b]
 
-                # If this is a spacer, it should not render at all if the next non-empty block is a spacer or has a different alignment
-                if ($Block.Content -eq [PoshCode.BlockSpace]::Spacer -and (
-                        -not $Neighbor.Cache -or
-                        $Neighbor.Content -eq [PoshCode.BlockSpace]::Spacer -or
-                        $Neighbor.Alignment -ne $Block.Alignment)) {
-                    Write-Verbose "Don't render $b"
-                    continue
-                }
-
-                if ($text = $Block.ToLine($Neighbor.BackgroundColor, $CacheKey)) {
-                    $text
+            $n = $b
+            # Your neighbor is the next non-empty block with the same alignment as you
+            while (++$n -lt $Blocks.Count -and $Block.Alignment -eq $Blocks[$n].Alignment) {
+                if ($Blocks[$n].Cache) {
+                    $Neighbor = $Blocks[$n]
+                    break;
                 }
             }
-        )
+
+            # Don't render spacers, if they don't have a real (non-space) neighbors
+            if ($Block.Content -eq [PoshCode.BlockSpace]::Spacer -and (!$Neighbor.Cache -or $Neighbor.Content -eq [PoshCode.BlockSpace]::Spacer)) {
+                continue
+            }
+
+            $null = $result.Append($Block.ToLine($Neighbor.BackgroundColor, $CacheKey))
+        }
+        $result.ToString()
     }
 }

@@ -25,11 +25,13 @@ namespace PoshCode
     {
         private Regex _escapeCode = new Regex("\u001B\\P{L}+\\p{L}", RegexOptions.Compiled);
         [ThreadStatic] private static int rightPad = -1;
+        [ThreadStatic] private static int lastExitCode = 0;
         [ThreadStatic] private static bool lastSuccess = true;
         [ThreadStatic] private static BlockCap cap;
         [ThreadStatic] private static BlockCap separator;
 
         // TODO: Document Static Properties:
+        public static int LastExitCode { get => lastExitCode; set => lastExitCode = value; }
         public static bool LastSuccess { get => lastSuccess; set => lastSuccess = value; }
         public static BlockCap DefaultCap { get => cap; set => cap = value; }
         public static BlockCap DefaultSeparator { get => separator; set => separator = value; }
