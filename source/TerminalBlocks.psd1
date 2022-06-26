@@ -1,7 +1,7 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-RootModule = 'PromptBlocks.psm1'
+RootModule = 'TerminalBlocks.psm1'
 
 # Version number of this module.
 ModuleVersion = '1.0.0'
@@ -37,7 +37,7 @@ PowerShellVersion = '5.1.0'
 FormatsToProcess = @("TerminalBlocks.format.ps1xml")
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-    NestedModules = @( "lib\PromptBlocks.dll" )
+    NestedModules = @( "lib\TerminalBlocks.dll" )
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata
@@ -69,10 +69,10 @@ PrivateData = @{
         Tags = @("Prompt", "ANSI", "VirtualTerminal", "EzTheme")
 
         # A URL to the license for this module.
-        LicenseUri = 'https://github.com/Jaykul/PowerLine/blob/master/LICENSE'
+        LicenseUri = 'https://github.com/Jaykul/TerminalBlocks/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-        ProjectUri = 'https://github.com/Jaykul/PowerLine'
+            ProjectUri = 'https://github.com/Jaykul/TerminalBlocks'
 
         # A URL to an icon representing this module.
         # IconUri = ''
@@ -80,24 +80,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-        4.0.0: Major refactor to use a C# `PromptBlock` class
-            - Enables mixing and matching line endings
-            - Enables spacers
-        3.4.0: Support right-aligned blocks (with PSReadLine 2.2.0)
-            - Fix Get-SegmentedPath so it works with other paths
-            - Speed up some things using new PANSIES
-        3.3.1: Fix a series of bugs:
-            - Fix Get-Date format
-            - Fix Linux use of default BackgroundColor
-        3.3.0: Add support for Set-PSReadLineOption -Prompt
-        3.2.0: Add support for EzTheme
-            - Adds Get-PowerLineTheme (and alias for Set-PowerLinePrompt)
         '
     } # End of PSData hashtable
-    "EzTheme" = @{
-        Get = 'Get-PowerLineTheme'
-        Set = 'Set-PowerLineTheme'
-    }
 } # End of PrivateData hashtable
 
 # HelpInfo URI of this module
