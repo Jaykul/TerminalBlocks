@@ -4,5 +4,5 @@
     ModuleManifest           = "Source/TerminalBlocks.psd1"
     OutputDirectory          = "../"
     VersionedOutputDirectory = $true
-    CopyDirectories          = @('blocks','TerminalBlocks.format.ps1xml')
+    CopyDirectories          = @('TerminalBlocks.format.ps1xml')
 }

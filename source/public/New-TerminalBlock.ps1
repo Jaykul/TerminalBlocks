@@ -7,7 +7,7 @@ function New-TerminalBlock {
 
             Tests elevation fist, and then whether the last command was successful, so if you pass separate colors for each, the Elevated*Color will be used when PowerShell is running as administrator and there is no error. The Error*Color will be used whenever there's an error, whether it's elevated or not.
         .Example
-            New-TerminalBlock { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
+            New-TerminalBlock { Show-ElapsedTime } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
 
             This example shows the time elapsed executing the last command in White on a DarkBlue background, but switches the text to yellow if elevated, and the background to red on error.
     #>
@@ -17,9 +17,9 @@ function New-TerminalBlock {
     [Alias("TerminalBlock", "Block")]
     param(
         # The text, object, or scriptblock to show as output
-        [Alias("Content", "Text", "Object")]
         [AllowNull()][EmptyStringAsNull()]
         [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "InputObject")] # , Mandatory=$true
+        [Alias("Content")]
         $InputObject,
 
         [PoshCode.TerminalPosition]$Position,
@@ -44,7 +44,7 @@ function New-TerminalBlock {
                                 [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                     ))
             })]
-        [char[]]$Separator,
+        [PoshCode.BlockCap]$Separator,
 
         # The cap character(s) are used on the ends of blocks of output
         # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
@@ -56,40 +56,40 @@ function New-TerminalBlock {
                                 [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                     ))
             })]
-        [char[]]$Cap,
+        [PoshCode.BlockCap]$Cap,
 
         # The foreground color to use when the last command succeeded
-        [Alias("Foreground", "Fg", "DFg")]
+        [Alias("ForegroundColor", "Fg", "DFg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$DefaultForegroundColor,
 
         # The background color to use when the last command succeeded
-        [Alias("Background", "Bg", "DBg")]
+        [Alias("BackgroundColor", "Bg", "DBg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$DefaultBackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
-        [Alias("AFg")]
+        [Alias("AdminFg","AFg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [PoshCode.Pansies.RgbColor]$ElevatedForegroundColor,
+        [PoshCode.Pansies.RgbColor]$AdminForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
-        [Alias("ABg")]
+        [Alias("AdminBg","ABg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [PoshCode.Pansies.RgbColor]$ElevatedBackgroundColor,
+        [PoshCode.Pansies.RgbColor]$AdminBackgroundColor,
 
         # The foreground color to use when the last command failed
-        [Alias("EFg")]
+        [Alias("ErrorFg", "EFg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
-        [Alias("EBg")]
+        [Alias("ErrorBg", "EBg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
@@ -101,31 +101,19 @@ function New-TerminalBlock {
         } elseif ($Spacer) {
             $InputObject = [PoshCode.BlockSpace]::Spacer
             $null = $PSBoundParameters.Remove("Spacer")
-        # Work around possible weird parameter bindings
         }
 
         # Handle named terminal blocks
         $PSBoundParameters["InputObject"] = switch ($InputObject) {
-            { $InputObject.InputObject } { $InputObject.InputObject }
-            { $InputObject.Object }      { $InputObject.Object }
-            { $InputObject.Text }        { $InputObject = $InputObject.Text }
-
             "`n"    { [PoshCode.BlockSpace]::NewLine }
             " "     { [PoshCode.BlockSpace]::Spacer }
-
-            default {
-                if ($InputObject -is [string] -or $InputObject -is [scriptblock]) {
-                    if (($InputObject|ImportBlock) -and $InputObject -is [string]) {
-                        Write-Verbose "Creating Scriptblock for { $InputObject }"
-                        [ScriptBlock]::create($InputObject)
-                        continue
-                    }
-                }
-                $InputObject
-            }
+            default { $InputObject }
         }
+
         # Strip common parameters if they're on here (so we can use -Verbose)
-        $null = [System.Management.Automation.PSCmdlet]::CommonParameters.ForEach({$PSBoundParameters.Remove($_)})
+        foreach($name in [System.Management.Automation.PSCmdlet]::CommonParameters) {
+            $null = $PSBoundParameters.Remove($name)
+        }
 
         [PoshCode.TerminalBlock]$PSBoundParameters
     }
