@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -208,6 +208,10 @@ namespace PoshCode
                 {
                     Position = LanguagePrimitives.ConvertTo<TerminalPosition>(values[key]);
                 }
+                else if (Regex.IsMatch(key, "persist|entities", RegexOptions.IgnoreCase))
+                {
+                    // I once had these properties, but I don't anymore
+                }
                 else
                 {
                     throw new ArgumentException("Unknown key '" + key + "' in " + values.GetType().Name + ". Allowed values are Alignment, Position, BackgroundColor (or bg), ForegroundColor (or fg), AdminBackgroundColor (or Abg), AdminForegroundColor (or Afg), ErrorBackgroundColor (or Ebg), ErrorForegroundColor (or Efg), Separator, Cap, and Content (also called Object or Text)");
@@ -247,46 +251,50 @@ namespace PoshCode
                 return Cache;
             }
 
-            if (content is BlockSpace)
-            {
-                CacheLength = 1;
-                Cache = content;
-                return content;
-            }
-
-            Cache = null;
             CacheKey = cacheKey ?? String.Empty;
-            if (!(Content is null))
-            {
 
+            if (Content is null)
+            {
+                Cache = null;
+                CacheLength = 0;
+            }
+            else if (content is BlockSpace)
+            {
+                Cache = content;
+                // The length is just the length of the cap, if any
+                CacheLength = _escapeCode.Replace(Cap?.ToString(Alignment) ?? "", "").Length;
+            }
+            else
+            {
                 Cache = Entities.Decode(ConvertToString(Content));
+                // Empty strings are null
                 if (string.IsNullOrEmpty(Cache?.ToString()))
                 {
                     Cache = null;
+                    CacheLength = 0;
+                }
+                else
+                {
+                    // The length includes the length of the cap, if any
+                    CacheLength = _escapeCode.Replace(Cache.ToString(), "").Length + _escapeCode.Replace(Cap?.ToString(Alignment) ?? "", "").Length;
                 }
             }
-
-            // The length includes the length of the cap, if any
-            CacheLength = Cache != null ? _escapeCode.Replace(Cache.ToString(), "").Length + _escapeCode.Replace(Cap?.ToString(Alignment) ?? "", "").Length : 0;
 
             return Cache;
         }
 
         private string ConvertToString(object content, string separator = " ")
         {
-            if (content != null)
-            {
-                string s = content as string;
-                ScriptBlock sb = null;
-                IEnumerable enumerable = null;
-                // strings are IEnumerable, so we special case them
-                if (s != null && s.Length > 0)
-                {
+            if (content is null) {
+                return null;
+            }
+
+            switch (content) {
+                case String s:
                     return s;
-                }
-                else if ((enumerable = content as IEnumerable) != null)
-                {
-                    // unroll enumerables, including arrays.
+                case ScriptBlock sb:
+                    return ConvertToString(sb.Invoke(), separator);
+                case IEnumerable enumerable:
 
                     bool printSeparator = false;
                     StringBuilder result = new StringBuilder();
@@ -303,23 +311,9 @@ namespace PoshCode
                     }
 
                     return result.ToString();
-                }
-                else if (!((sb = content as ScriptBlock) is null))
-                {
-                    return ConvertToString(sb.Invoke(), separator);
-                }
-                else
-                {
-                    s = content.ToString();
-
-                    if (s.Length > 0)
-                    {
-                        return s;
-                    }
-                }
+                default:
+                    return content.ToString();
             }
-
-            return null;
         }
 
 
@@ -332,18 +326,17 @@ namespace PoshCode
         {
             string output = GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Alignment, Cap?.ToString(Alignment), otherBackground);
 
-            if (Alignment == BlockAlignment.Right && CacheLength > 0)
+            // If there's no length, there's no output, so no position
+            if (CacheLength == 0)
             {
-                var prefix = "";
-                //if (rightPad == -1)
-                //{
-                    prefix = $"\u001B[{Console.BufferWidth}G";
-                //}
-                rightPad += CacheLength;
-
-                return prefix + $"\u001B[{rightPad}D" + Position?.ToString() + output;
+                return null;
             }
-            else if (CacheLength > 0)
+            else if (Alignment == BlockAlignment.Right)
+            {
+                rightPad += CacheLength;
+                return $"\u001B[{Console.BufferWidth}G" + $"\u001B[{rightPad}D" + Position?.ToString() + output;
+            }
+            else
             {
                 // currently right-aligned, so make a new line
                 if (rightPad >= 0)
@@ -353,8 +346,6 @@ namespace PoshCode
                 }
                 return Position?.ToString() + output;
             }
-
-            return output;
         }
 
         private static string GetString(RgbColor foreground, RgbColor background, object content, BlockAlignment alignment = BlockAlignment.Left, string cap = null, RgbColor otherBackground = null)
@@ -380,6 +371,7 @@ namespace PoshCode
 
             var output = new StringBuilder();
 
+            // right-aligned blocks prepend their cap
             if (cap != null && alignment == BlockAlignment.Right)
             {
                 if (null != otherBackground)
@@ -395,36 +387,11 @@ namespace PoshCode
                 output.Append("\u001b[39m");
             }
 
-            var color = new StringBuilder();
-            if (null != foreground)
-            {
-                // There was a bug in Conhost where an advanced 48;2 RGB code followed by a console code wouldn't render the RGB value
-                // So we try to put the ConsoleColor first, if it's there ...
-                if (foreground.Mode == ColorMode.ConsoleColor)
-                {
-                    color.Append(foreground.ToVtEscapeSequence(false));
-                    if (null != background)
-                    {
-                        color.Append(background.ToVtEscapeSequence(true));
-                    }
-                }
-                else
-                {
-                    if (null != background)
-                    {
-                        color.Append(background.ToVtEscapeSequence(true));
-                    }
-                    color.Append(foreground.ToVtEscapeSequence(false));
-                }
-            }
-            else if (null != background)
-            {
-                color.Append(background.ToVtEscapeSequence(true));
-            }
-
-            output.Append(color?.ToString());
+            output.Append(background?.ToVtEscapeSequence(true));
+            output.Append(foreground?.ToVtEscapeSequence(false));
             output.Append(content?.ToString());
 
+            // left-aligned blocks append their cap
             if (cap != null && alignment == BlockAlignment.Left)
             {
                 // clear background
