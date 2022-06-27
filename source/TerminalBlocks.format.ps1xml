@@ -79,7 +79,7 @@
               </TableColumnItem>
               <TableColumnItem>
                 <ScriptBlock>
-                    $_.ToString() + "$([char]27)[0m"
+                    $_.ToString($false) + "$([char]27)[0m"
                 </ScriptBlock>
               </TableColumnItem>
             </TableColumnItems>

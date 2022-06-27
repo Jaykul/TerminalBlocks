@@ -26,13 +26,21 @@ function New-TerminalBlock {
 
         [PoshCode.BlockAlignment]$Alignment,
 
-        # Add a line break to the prompt (the next block will start a new line)
+        # A special block that outputs just a newline (with no caps, ever)
         [Parameter(Mandatory, ParameterSetName = "Newline")]
         [Switch]$Newline,
 
-        # Add a zero-width space to the prompt (creates a gap between blocks)
+        # A special block that outputs an inverted Cap (to create gaps in PowerLine)
         [Parameter(Mandatory, ParameterSetName = "Spacer")]
         [Switch]$Spacer,
+
+        # A special block that stores the position it would have output at
+        [Parameter(Mandatory, ParameterSetName = "StorePosition")]
+        [Switch]$StorePosition,
+
+        # A special block that recalls to the position of a previous StorePosition block
+        [Parameter(Mandatory, ParameterSetName = "RecallPosition")]
+        [Switch]$RecallPosition,
 
         # The separator character(s) are used between blocks of output by this scriptblock
         # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
@@ -95,19 +103,23 @@ function New-TerminalBlock {
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
     process {
-        if ($Newline) {
-            $InputObject = [PoshCode.BlockSpace]::NewLine
-            $null = $PSBoundParameters.Remove("Newline")
-        } elseif ($Spacer) {
-            $InputObject = [PoshCode.BlockSpace]::Spacer
-            $null = $PSBoundParameters.Remove("Spacer")
-        }
-
-        # Handle named terminal blocks
-        $PSBoundParameters["InputObject"] = switch ($InputObject) {
-            "`n"    { [PoshCode.BlockSpace]::NewLine }
-            " "     { [PoshCode.BlockSpace]::Spacer }
-            default { $InputObject }
+        switch($PSCmdlet.ParameterSetName) {
+            Newline {
+                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::NewLine
+                $null = $PSBoundParameters.Remove("Newline")
+            }
+            Spacer {
+                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::Spacer
+                $null = $PSBoundParameters.Remove("Spacer")
+            }
+            StorePosition {
+                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::StorePosition
+                $null = $PSBoundParameters.Remove("StorePosition")
+            }
+            RecallPosition {
+                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::RecallPosition
+                $null = $PSBoundParameters.Remove("RecallPosition")
+            }
         }
 
         # Strip common parameters if they're on here (so we can use -Verbose)

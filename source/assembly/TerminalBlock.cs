@@ -24,17 +24,17 @@ namespace PoshCode
     public class TerminalBlock : IPsMetadataSerializable
     {
         private Regex _escapeCode = new Regex("\u001B\\P{L}+\\p{L}", RegexOptions.Compiled);
-        [ThreadStatic] private static int rightPad = -1;
-        [ThreadStatic] private static int lastExitCode = 0;
-        [ThreadStatic] private static bool lastSuccess = true;
-        [ThreadStatic] private static BlockCap cap;
-        [ThreadStatic] private static BlockCap separator;
+        [ThreadStatic] private static int __rightPad = -1;
+        [ThreadStatic] private static int __lastExitCode = 0;
+        [ThreadStatic] private static bool __lastSuccess = true;
+        [ThreadStatic] private static BlockCap __cap;
+        [ThreadStatic] private static BlockCap __separator;
 
         // TODO: Document Static Properties:
-        public static int LastExitCode { get => lastExitCode; set => lastExitCode = value; }
-        public static bool LastSuccess { get => lastSuccess; set => lastSuccess = value; }
-        public static BlockCap DefaultCap { get => cap; set => cap = value; }
-        public static BlockCap DefaultSeparator { get => separator; set => separator = value; }
+        public static int LastExitCode { get => __lastExitCode; set => __lastExitCode = value; }
+        public static bool LastSuccess { get => __lastSuccess; set => __lastSuccess = value; }
+        public static BlockCap DefaultCap { get => __cap; set => __cap = value; }
+        public static BlockCap DefaultSeparator { get => __separator; set => __separator = value; }
 
         public static bool Elevated { get; }
         static TerminalBlock()
@@ -51,7 +51,7 @@ namespace PoshCode
                 {
                     Elevated = 0 == NativeMethods.getuid();
                 }
-                catch {}
+                catch { }
             }
         }
 
@@ -75,7 +75,7 @@ namespace PoshCode
                 {
                     return ErrorForegroundColor ?? DefaultBackgroundColor;
                 }
-                else if(Elevated)
+                else if (Elevated)
                 {
                     return AdminForegroundColor ?? DefaultBackgroundColor;
                 }
@@ -114,7 +114,7 @@ namespace PoshCode
         }
 
 
-        private object content;
+        private object _content;
         /// <summary>
         /// Gets or sets the object.
         /// </summary>
@@ -123,22 +123,22 @@ namespace PoshCode
         {
             get
             {
-                return content;
+                return _content;
             }
             set
             {
                 var spaceTest = value.ToString();
                 if (spaceTest.Equals("\n", StringComparison.Ordinal) || spaceTest.Trim().Equals("\"`n\"", StringComparison.Ordinal))
                 {
-                    content = BlockSpace.NewLine;
+                    _content = SpecialBlock.NewLine;
                 }
                 else if (spaceTest.Equals(" ", StringComparison.Ordinal) || spaceTest.Trim().Equals("\" \"", StringComparison.Ordinal))
                 {
-                    content = BlockSpace.Spacer;
+                    _content = SpecialBlock.Spacer;
                 }
                 else
                 {
-                    content = value;
+                    _content = value;
                 }
             }
         }
@@ -190,7 +190,7 @@ namespace PoshCode
                         Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) ||
                         Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {
-                    content = values[key];
+                    _content = values[key];
                 }
                 else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase))
                 {
@@ -238,64 +238,53 @@ namespace PoshCode
 
         // TODO: Document the Cache. Normally, you should `Invoke($MyInvocation.HistoryId)` to take advantage of caching.
 
-        /// <summary>The Cache is always EITHER a string or a BlockSpace enum</summary>
-        public object Cache { get; private set; }
+        /// <summary>The Cache is always EITHER: null, a string, or a SpecialBlock enum</summary>
+
+        public object Cache {
+            get => _cache;
+            private set {
+                if (value is null) {
+                    _cache = value;
+                    CacheLength = 0;
+                } else if (value is SpecialBlock) {
+                    _cache = value;
+                    CacheLength = (Cap is null ? 0 : _escapeCode.Replace(Cap.ToString(Alignment), "").Length);
+                } else {
+                    _cache = Entities.Decode((string)value);
+                    CacheLength = _escapeCode.Replace((string)_cache, "").Length + (Cap is null ? 0 : _escapeCode.Replace(Cap.ToString(Alignment), "").Length);
+                }
+            }
+        }
         public int CacheLength { get; private set; }
 
-        private object CacheKey;
+        private object _cacheKey;
+        private object _cache;
+
         public object Invoke(object cacheKey = null)
         {
             // null forces re-evaluation
-            if (cacheKey?.Equals(CacheKey) == true)
+            if (cacheKey?.Equals(_cacheKey) == true)
             {
                 return Cache;
             }
-
-            CacheKey = cacheKey ?? String.Empty;
-
-            if (Content is null)
-            {
-                Cache = null;
-                CacheLength = 0;
-            }
-            else if (content is BlockSpace)
-            {
-                Cache = content;
-                // The length is just the length of the cap, if any
-                CacheLength = _escapeCode.Replace(Cap?.ToString(Alignment) ?? "", "").Length;
-            }
-            else
-            {
-                Cache = Entities.Decode(ConvertToString(Content));
-                // Empty strings are null
-                if (string.IsNullOrEmpty(Cache?.ToString()))
-                {
-                    Cache = null;
-                    CacheLength = 0;
-                }
-                else
-                {
-                    // The length includes the length of the cap, if any
-                    CacheLength = _escapeCode.Replace(Cache.ToString(), "").Length + _escapeCode.Replace(Cap?.ToString(Alignment) ?? "", "").Length;
-                }
-            }
-
+            _cacheKey = cacheKey ?? String.Empty;
+            Cache = ReInvoke(Content);
             return Cache;
         }
 
-        private string ConvertToString(object content, string separator = " ")
+        private object ReInvoke(object content)
         {
-            if (content is null) {
-                return null;
-            }
-
-            switch (content) {
+            switch (content)
+            {
+                case null:
+                    return null;
+                case SpecialBlock bs:
+                    return bs;
                 case String s:
-                    return s;
+                    return Entities.Decode(s);
                 case ScriptBlock sb:
-                    return ConvertToString(sb.Invoke(), separator);
+                    return ReInvoke(sb.Invoke());
                 case IEnumerable enumerable:
-
                     bool printSeparator = false;
                     StringBuilder result = new StringBuilder();
 
@@ -306,7 +295,7 @@ namespace PoshCode
                             result.Append(Separator?.ToString(Alignment) ?? " ");
                         }
 
-                        result.Append(ConvertToString(element, separator));
+                        result.Append(ReInvoke(element));
                         printSeparator = true;
                     }
 
@@ -316,99 +305,93 @@ namespace PoshCode
             }
         }
 
+        public override string ToString() => ToString(position: true);
 
-        public override string ToString()
+        public string ToString(bool position = false, RgbColor otherBackground = null, object cacheKey = null)
         {
-            return GetString(ForegroundColor, BackgroundColor, Invoke(null), Alignment, Cap?.ToString(Alignment));
-        }
-
-        public string ToLine(RgbColor otherBackground = null, object cacheKey = null)
-        {
-            string output = GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Alignment, Cap?.ToString(Alignment), otherBackground);
-
-            // If there's no length, there's no output, so no position
-            if (CacheLength == 0)
+            var content = Invoke(cacheKey);
+            if (content is null)
             {
                 return null;
             }
-            else if (Alignment == BlockAlignment.Right)
-            {
-                rightPad += CacheLength;
-                return $"\u001B[{Console.BufferWidth}G" + $"\u001B[{rightPad}D" + Position?.ToString() + output;
-            }
-            else
-            {
-                // currently right-aligned, so make a new line
-                if (rightPad >= 0)
-                {
-                    rightPad = -1;
-                    return "\n" + Position?.ToString() + output;
-                }
-                return Position?.ToString() + output;
-            }
-        }
 
-        private static string GetString(RgbColor foreground, RgbColor background, object content, BlockAlignment alignment = BlockAlignment.Left, string cap = null, RgbColor otherBackground = null)
-        {
-            if (content is null) {
-                return null;
-            }
+            var capString = Cap?.ToString(Alignment);
+            var background = BackgroundColor;
+            var foreground = ForegroundColor;
 
-            if (content is BlockSpace space)
+            if (content is SpecialBlock space)
             {
                 switch (space)
                 {
-                    case BlockSpace.Spacer:
-                        cap = "\u001b[7m" + cap + "\u001b[27m";
+                    case SpecialBlock.Spacer:
+                        capString = "\u001b[7m" + capString + "\u001b[27m";
                         content = string.Empty;
                         background = otherBackground;
                         foreground = otherBackground = null;
                         break;
-                    case BlockSpace.NewLine:
+                    case SpecialBlock.StorePosition:
+                        return "\u001b7";
+                    case SpecialBlock.RecallPosition:
+                        return "\u001b8";
+                    case SpecialBlock.NewLine:
                         return "\n";
                 }
             }
 
             var output = new StringBuilder();
 
-            // right-aligned blocks prepend their cap
-            if (cap != null && alignment == BlockAlignment.Right)
+            // If there's no length, there's no output, so no position
+            if (position)
             {
-                if (null != otherBackground)
+                if (Alignment == BlockAlignment.Right)
                 {
-                    output.Append(otherBackground.ToVtEscapeSequence(true));
+                    __rightPad += CacheLength;
+                    output.Append($"\u001B[{Console.BufferWidth}G");
+                    output.Append($"\u001B[{__rightPad}D");
                 }
-                if (null != background)
+                // currently right-aligned, so make a new line
+                else if (__rightPad >= 0)
                 {
-                    output.Append(background.ToVtEscapeSequence(false));
+                    __rightPad = -1;
+                    output.Insert(0, '\n');
                 }
-                output.Append(cap);
+                Position?.AppendTo(output);
+            }
+
+            // right-aligned blocks prepend their cap
+            if (capString != null && Alignment == BlockAlignment.Right)
+            {
+                // use otherBackground, and this background as foreground
+                otherBackground?.AppendTo(output, true);
+                background?.AppendTo(output, false);
+                output.Append(capString);
                 // clear foreground
                 output.Append("\u001b[39m");
             }
 
-            output.Append(background?.ToVtEscapeSequence(true));
-            output.Append(foreground?.ToVtEscapeSequence(false));
+            background?.AppendTo(output, true);
+            foreground?.AppendTo(output, false);
             output.Append(content?.ToString());
 
             // left-aligned blocks append their cap
-            if (cap != null && alignment == BlockAlignment.Left)
+            if (capString != null && Alignment == BlockAlignment.Left)
             {
                 // clear background
                 output.Append("\u001B[49m");
-                if (null != otherBackground)
-                {
-                    output.Append(otherBackground.ToVtEscapeSequence(true));
-                }
-                if (null != background)
-                {
-                    output.Append(background.ToVtEscapeSequence(false));
-                }
-                output.Append(cap);
+                // use otherBackground, and this background as foreground
+                otherBackground?.AppendTo(output, true);
+                background?.AppendTo(output, false);
+                output.Append(capString);
             }
 
-            return Pansies.Entities.Decode(output.ToString()) + "\u001B[0m";
+            // clear formatting
+            output.Append("\u001B[0m");
+
+
+
+            return Entities.Decode(output.ToString());
         }
+
 
         public bool Equals(TerminalBlock other)
         {
@@ -421,33 +404,34 @@ namespace PoshCode
                 (Cap == null && other.Cap == null || Cap.Equals(other.Cap));
         }
 
-        public string ToPsMetadata() {
+        public string ToPsMetadata()
+        {
 
             var objectString = string.Empty;
             // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
-            if (Content is BlockSpace space)
+            if (Content is SpecialBlock space)
             {
                 objectString = "\" \"";
                 switch (space)
                 {
-                    case BlockSpace.Spacer:
+                    case SpecialBlock.Spacer:
                         objectString = "\" \"";
                         break;
-                    case BlockSpace.NewLine:
+                    case SpecialBlock.NewLine:
                         objectString = "\"`n\"";
                         break;
                 }
             }
             else if (Content is ScriptBlock script)
             {
-                objectString = "(ScriptBlock '" + script.ToString().Replace("\'","\'\'") + "')";
+                objectString = "(ScriptBlock '" + script.ToString().Replace("\'", "\'\'") + "')";
             }
             else
             {
                 objectString = "\'" + Content.ToString().Replace("\'", "\'\'") + "\'";
             }
 
-            return  "@{" +
+            return "@{" +
                     (DefaultForegroundColor is null ? "" : $"\nDFg='{DefaultForegroundColor}'") +
                     (DefaultBackgroundColor is null ? "" : $"\nDBg='{DefaultBackgroundColor}'") +
                     (ErrorForegroundColor is null ? "" : $"\nEFg='{ErrorForegroundColor}'") +
@@ -467,15 +451,15 @@ namespace PoshCode
 
             var objectString = string.Empty;
             // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
-            if (Content is BlockSpace space)
+            if (Content is SpecialBlock space)
             {
                 objectString = "\" \"";
                 switch (space)
                 {
-                    case BlockSpace.Spacer:
+                    case SpecialBlock.Spacer:
                         objectString = "\" \"";
                         break;
-                    case BlockSpace.NewLine:
+                    case SpecialBlock.NewLine:
                         objectString = "\"`n\"";
                         break;
                 }
