@@ -330,9 +330,9 @@ namespace PoshCode
                         foreground = otherBackground = null;
                         break;
                     case SpecialBlock.StorePosition:
-                        return "\u001b7";
+                        return "\u001b[s";
                     case SpecialBlock.RecallPosition:
-                        return "\u001b8";
+                        return "\u001b[u";
                     case SpecialBlock.NewLine:
                         return "\n";
                 }
