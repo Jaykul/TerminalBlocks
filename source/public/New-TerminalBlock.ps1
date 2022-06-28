@@ -13,14 +13,14 @@ function New-TerminalBlock {
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'New is not state changing!')]
     [OutputType([PoshCode.TerminalBlock])]
-    [CmdletBinding(DefaultParameterSetName = "InputObject")]
+    [CmdletBinding(DefaultParameterSetName = "Content")]
     [Alias("TerminalBlock", "Block")]
     param(
         # The text, object, or scriptblock to show as output
         [AllowNull()][EmptyStringAsNull()]
-        [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "InputObject")] # , Mandatory=$true
-        [Alias("Content")]
-        $InputObject,
+        [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Content")] # , Mandatory=$true
+        [Alias("InputObject")]
+        $Content,
 
         [PoshCode.TerminalPosition]$Position,
 
@@ -105,19 +105,19 @@ function New-TerminalBlock {
     process {
         switch($PSCmdlet.ParameterSetName) {
             Newline {
-                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::NewLine
+                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::NewLine
                 $null = $PSBoundParameters.Remove("Newline")
             }
             Spacer {
-                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::Spacer
+                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::Spacer
                 $null = $PSBoundParameters.Remove("Spacer")
             }
             StorePosition {
-                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::StorePosition
+                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::StorePosition
                 $null = $PSBoundParameters.Remove("StorePosition")
             }
             RecallPosition {
-                $PSBoundParameters["InputObject"] = [PoshCode.SpecialBlock]::RecallPosition
+                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::RecallPosition
                 $null = $PSBoundParameters.Remove("RecallPosition")
             }
         }

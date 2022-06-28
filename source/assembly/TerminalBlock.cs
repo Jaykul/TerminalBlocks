@@ -185,9 +185,9 @@ namespace PoshCode
                 {
                     ForegroundColor = RgbColor.ConvertFrom(values[key]);
                 }
-                else if (Regex.IsMatch("InputObject", pattern, RegexOptions.IgnoreCase) ||
+                else if (Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) ||
+                        Regex.IsMatch("InputObject", pattern, RegexOptions.IgnoreCase) ||
                         Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) ||
-                        Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) ||
                         Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {
                     _content = values[key];
