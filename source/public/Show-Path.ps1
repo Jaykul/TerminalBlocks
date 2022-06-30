@@ -7,9 +7,6 @@ function Show-Path {
     #>
     [CmdletBinding(DefaultParameterSetName = "Length")]
     param(
-        # A string to show before the output. Defaults to empty.
-        [string]$Prefix = "",
-
         # The path to shorten (by default, the present working directory: $pwd)
         [Parameter(Position=0)]
         [string]$Path = $pwd,
@@ -47,18 +44,7 @@ function Show-Path {
         # Optionally, turn it into a hyperlink to the full path.
         # In Windows Terminal, for instance, this makes it show the full path on hover, and open your file manager on ctrl+click
         [Parameter()]
-        [switch]$AsUrl,
-
-        # A decorative replacement for the path separator. Defaults to DirectorySeparatorChar
-        [ArgumentCompleter({
-            [System.Collections.Generic.List[System.Management.Automation.CompletionResult]]::new(
-                [System.Management.Automation.CompletionResult[]]@(
-                # The Consolas-friendly block characters ▌and▐ and ╲ followed by all the extended powerline cahracters
-                @([string[]][char[]]@(@(0xe0b0..0xe0d4) + @(0x2588..0x259b) + @(0x256d..0x2572) + @('\','/'))).ForEach({
-                    [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
-            ))
-        })]
-        [string]$Separator
+        [switch]$AsUrl
     )
 
     # If user passes 0 (or less), I just refuse to deal with it
@@ -171,8 +157,8 @@ function Show-Path {
 
     if ($AsUrl -and "FileSystem" -eq $Provider.Name) {
         $8 = "$([char]27)]8;;"
-        $Prefix + ("$8{0}`a{1}$8`a" -f $OriginalPath, $Path)
+        "$8{0}`a{1}$8`a" -f $OriginalPath, $Path
     } else {
-        $Prefix + $Path
+        $Path
     }
 }

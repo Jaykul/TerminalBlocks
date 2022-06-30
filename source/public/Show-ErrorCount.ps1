@@ -7,9 +7,6 @@ function Show-ErrorCount {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output.
-        $Prefix = "",
-
         # If set, always show the output
         [switch]$ShowZero
     )
@@ -17,6 +14,6 @@ function Show-ErrorCount {
     $Count = $global:Error.Count - $script:LastErrorCount
     $script:LastErrorCount = $global:Error.Count
     if ($ShowZero -or $Count -gt 0) {
-        $Prefix + $Count
+        $Count
     }
 }

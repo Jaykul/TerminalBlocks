@@ -37,7 +37,7 @@ PowerShellVersion = '5.1.0'
 FormatsToProcess = @("TerminalBlocks.format.ps1xml")
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-    NestedModules = @( "lib\TerminalBlocks.dll" )
+NestedModules = @( "lib\TerminalBlocks.dll" )
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata

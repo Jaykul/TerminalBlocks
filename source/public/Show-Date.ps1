@@ -8,12 +8,11 @@ function Show-Date {
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param(
-        # A string to show before the output. Defaults to "📆"
-        [string]$Prefix = "📆",
-
         # A DateTime format string such as "h\:mm\:ss". Defaults to "T"
         [Parameter(ParameterSetName = 'SimpleFormat')]
         [string]$Format = "T"
     )
-    $Prefix + (Get-Date -Format $Format)
+    if (!$prefix) { $Prefix = "📆" }
+
+    Get-Date -Format $Format
 }

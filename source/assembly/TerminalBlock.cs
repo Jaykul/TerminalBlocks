@@ -39,8 +39,9 @@ namespace PoshCode
         public static bool Elevated { get; }
         static TerminalBlock()
         {
-            DefaultCap = new BlockCap("\uE0B0", "\uE0B2");
-            DefaultSeparator = new BlockCap("\uE0B1", "\uE0B3");
+            // By default, no caps
+            DefaultCap = new BlockCap(" ", " ");
+            DefaultSeparator = new BlockCap(" ", " ");
             try
             {
                 Elevated = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAccountOperatorsSid);

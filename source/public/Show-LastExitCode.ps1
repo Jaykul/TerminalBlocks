@@ -9,9 +9,6 @@ function Show-LastExitCode {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output. Defaults to empty.
-        [string]$Prefix = "💣",
-
         # If you want to show a status even on successful commands, set this
         [string]$Success = "",
 
@@ -26,20 +23,21 @@ function Show-LastExitCode {
     )
     # If there was an error ...
     if (-not $? -or -not [PoshCode.TerminalBlock]::LastSuccess) {
+        if (!$Prefix) { $Prefix = "💣" }
         # We retrieve the InvocationInfo from the most recent error using $global:error[0]
         if ($LastError = $global:error[0]) {
             # If History[-1] matches Error[0].ErrorInvocationInfo then the last error NOT a native command
             if ($LastError.ErrorInvocationInfo -and (Get-History -Count 1).CommandLine -eq $global:error[0].ErrorInvocationInfo.Line) {
                 if ($NotFound -and $LastError.Exception -is [System.Management.Automation.CommandNotFoundException]) {
-                    $Prefix + $NotFound
+                    $NotFound
                 } elseif ($NotExecutable -and $LastError.Exception -is [System.Management.Automation.ApplicationFailedException]) {
-                    $Prefix + $NotExecutable
+                    $NotExecutable
                 }
             } else {
-                $Prefix + $(if ([PoshCode.TerminalBlock]::LastExitCode) { [PoshCode.TerminalBlock]::LastExitCode } else { $LASTEXITCODE })
+                $(if ([PoshCode.TerminalBlock]::LastExitCode) { [PoshCode.TerminalBlock]::LastExitCode } else { $LASTEXITCODE })
             }
         }
     } elseif ($Success) {
-        $Prefix + $Success
+        $Success
     }
 }

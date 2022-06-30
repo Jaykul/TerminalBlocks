@@ -4,13 +4,11 @@ function Show-KubeContext {
             Shows the current kubectl context
     #>
     [CmdletBinding()]
-    param(
-        # A string to show before the output.
-        [string]$Prefix = "${fg:316ce6}⎈$fg:clear "
-    )
+    param()
+    if (!$Prefix) { $Prefix = "⎈ " }
     if (Get-Command kubectl) {
         if (($Context = kubectl config current-context)) {
-            $Prefix + $Context
+            $Context
         }
     }
 }

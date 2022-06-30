@@ -22,25 +22,25 @@ function New-TerminalBlock {
         [Alias("InputObject")]
         $Content,
 
-        [PoshCode.TerminalPosition]$Position,
-
-        [PoshCode.BlockAlignment]$Alignment,
-
         # A special block that outputs just a newline (with no caps, ever)
         [Parameter(Mandatory, ParameterSetName = "Newline")]
-        [Switch]$Newline,
+        [switch]$Newline,
 
         # A special block that outputs an inverted Cap (to create gaps in PowerLine)
         [Parameter(Mandatory, ParameterSetName = "Spacer")]
-        [Switch]$Spacer,
+        [switch]$Spacer,
 
         # A special block that stores the position it would have output at
         [Parameter(Mandatory, ParameterSetName = "StorePosition")]
-        [Switch]$StorePosition,
+        [switch]$StorePosition,
 
         # A special block that recalls to the position of a previous StorePosition block
         [Parameter(Mandatory, ParameterSetName = "RecallPosition")]
-        [Switch]$RecallPosition,
+        [switch]$RecallPosition,
+
+        [PoshCode.TerminalPosition]$Position,
+
+        [PoshCode.BlockAlignment]$Alignment,
 
         # The separator character(s) are used between blocks of output by this scriptblock
         # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
@@ -68,37 +68,31 @@ function New-TerminalBlock {
 
         # The foreground color to use when the last command succeeded
         [Alias("ForegroundColor", "Fg", "DFg")]
-        [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$DefaultForegroundColor,
 
         # The background color to use when the last command succeeded
         [Alias("BackgroundColor", "Bg", "DBg")]
-        [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$DefaultBackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
         [Alias("AdminFg","AFg")]
-        [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$AdminForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
         [Alias("AdminBg","ABg")]
-        [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$AdminBackgroundColor,
 
         # The foreground color to use when the last command failed
         [Alias("ErrorFg", "EFg")]
-        [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
         [Alias("ErrorBg", "EBg")]
-        [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )

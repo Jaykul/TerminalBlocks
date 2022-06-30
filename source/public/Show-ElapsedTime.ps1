@@ -8,8 +8,6 @@ function Show-ElapsedTime {
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param(
-        # A string to show before the output. Defaults to "⏱️"
-        [string]$Prefix = "⏱️",
         # The command ID to get the execution time for (defaults to the previous command)
         [Parameter()]
         [int]$Id,
@@ -24,6 +22,8 @@ function Show-ElapsedTime {
         [Parameter(Mandatory, ParameterSetName = 'AutoFormat')]
         [switch]$Autoformat
     )
+
+    if (!$Prefix) { $Prefix = "⏱️" }
     $null = $PSBoundParameters.Remove("Format")
     $null = $PSBoundParameters.Remove("Autoformat")
 
@@ -48,5 +48,5 @@ function Show-ElapsedTime {
     } else {
         $Format -f $Duration
     }
-    $Prefix + $Result
+    $Result
 }
