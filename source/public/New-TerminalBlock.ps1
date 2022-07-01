@@ -42,6 +42,12 @@ function New-TerminalBlock {
 
         [PoshCode.BlockAlignment]$Alignment,
 
+        [Alias("Prepend")]
+        [String]$Prefix,
+
+        [Alias("Suffix", "Append")]
+        [String]$Postfix,
+
         # The separator character(s) are used between blocks of output by this scriptblock
         # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
         [ArgumentCompleter({
@@ -52,7 +58,7 @@ function New-TerminalBlock {
                                 [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                     ))
             })]
-        [PoshCode.BlockCap]$Separator,
+        [String]$Separator,
 
         # The cap character(s) are used on the ends of blocks of output
         # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
@@ -64,7 +70,7 @@ function New-TerminalBlock {
                                 [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                     ))
             })]
-        [PoshCode.BlockCap]$Cap,
+        [PoshCode.BlockCaps]$Caps,
 
         # The foreground color to use when the last command succeeded
         [Alias("ForegroundColor", "Fg", "DFg")]

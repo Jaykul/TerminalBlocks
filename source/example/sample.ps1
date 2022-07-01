@@ -8,8 +8,8 @@
 
     # Use a short time format and a clock prefix (I don't need the EXACT time in my prompt)
     # Because all of these are right-aligned, the first one is the furthest to the right
-    Show-Date -Format "h\:mm" <# -Prefix "🕒" #> -Foreground '#FFFFFF' -Alignment 'Right'
-    Show-ElapsedTime -Autoformat -Foreground '#FFFFFF' -Alignment 'Right'
+    Show-Date -Format "h\:mm" -Prefix "🕒" -Foreground '#FFFFFF' -Alignment 'Right'
+    Show-ElapsedTime -Autoformat -Foreground '#FFFFFF' -Alignment 'Right' -Prefix "⏱️"
     Show-LastExitCode -ErrorBackgroundColor '#8B2252' -Separator ' ' -Alignment 'Right'
 
     # Since this isn't right aligned, it starts a new line

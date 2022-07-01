@@ -27,21 +27,24 @@ namespace PoshCode
         [ThreadStatic] private static int __rightPad = -1;
         [ThreadStatic] private static int __lastExitCode = 0;
         [ThreadStatic] private static bool __lastSuccess = true;
-        [ThreadStatic] private static BlockCap __cap;
-        [ThreadStatic] private static BlockCap __separator;
+        [ThreadStatic] private static string __separator;
+        [ThreadStatic] private static BlockCaps __leftCaps;
+        [ThreadStatic] private static BlockCaps __rightCaps;
 
         // TODO: Document Static Properties:
         public static int LastExitCode { get => __lastExitCode; set => __lastExitCode = value; }
         public static bool LastSuccess { get => __lastSuccess; set => __lastSuccess = value; }
-        public static BlockCap DefaultCap { get => __cap; set => __cap = value; }
-        public static BlockCap DefaultSeparator { get => __separator; set => __separator = value; }
+        public static BlockCaps DefaultCapsLeftAligned { get => __leftCaps; set => __leftCaps = value; }
+        public static BlockCaps DefaultCapsRightAligned { get => __rightCaps; set => __rightCaps = value; }
+        public static String DefaultSeparator { get => __separator; set => __separator = value; }
 
         public static bool Elevated { get; }
         static TerminalBlock()
         {
             // By default, no caps
-            DefaultCap = new BlockCap(" ", " ");
-            DefaultSeparator = new BlockCap(" ", " ");
+            DefaultCapsLeftAligned  = new BlockCaps("", " ");
+            DefaultCapsRightAligned = new BlockCaps(" ", "");
+            DefaultSeparator = " ";
             try
             {
                 Elevated = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAccountOperatorsSid);
@@ -56,11 +59,13 @@ namespace PoshCode
             }
         }
 
-        // TODO: Document Publc Properties:
+        // TODO: Document Public Properties:
         public TerminalPosition Position { get; set; }
         public BlockAlignment Alignment { get; set; }
-        public BlockCap Cap { get; set; }
-        public BlockCap Separator { get; set; }
+        public BlockCaps Caps { get; set; }
+        public String Separator { get; set; }
+        public String Prefix { get; set; }
+        public String Postfix { get; set; }
         public RgbColor AdminForegroundColor { get; set; }
         public RgbColor AdminBackgroundColor { get; set; }
         public RgbColor ErrorForegroundColor { get; set; }
@@ -151,6 +156,10 @@ namespace PoshCode
         public TerminalBlock(IDictionary values) : this("")
         {
             FromDictionary(values);
+            if (Caps is null) {
+                Caps = Alignment == BlockAlignment.Left ?
+                    DefaultCapsLeftAligned : DefaultCapsRightAligned;
+            }
         }
 
         /// <summary>
@@ -195,11 +204,19 @@ namespace PoshCode
                 }
                 else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase))
                 {
-                    Separator = LanguagePrimitives.ConvertTo<BlockCap>(values[key]);
+                    Separator = LanguagePrimitives.ConvertTo<String>(values[key]);
                 }
-                else if (Regex.IsMatch("cap", pattern, RegexOptions.IgnoreCase))
+                else if (Regex.IsMatch("prefix", pattern, RegexOptions.IgnoreCase))
                 {
-                    Cap = LanguagePrimitives.ConvertTo<BlockCap>(values[key]);
+                    Prefix = LanguagePrimitives.ConvertTo<String>(values[key]);
+                }
+                else if (Regex.IsMatch("postfix", pattern, RegexOptions.IgnoreCase))
+                {
+                    Postfix = LanguagePrimitives.ConvertTo<String>(values[key]);
+                }
+                else if (Regex.IsMatch("caps", pattern, RegexOptions.IgnoreCase))
+                {
+                    Caps = LanguagePrimitives.ConvertTo<BlockCaps>(values[key]);
                 }
                 else if (Regex.IsMatch("alignment", pattern, RegexOptions.IgnoreCase))
                 {
@@ -215,7 +232,7 @@ namespace PoshCode
                 }
                 else
                 {
-                    throw new ArgumentException("Unknown key '" + key + "' in " + values.GetType().Name + ". Allowed values are Alignment, Position, BackgroundColor (or bg), ForegroundColor (or fg), AdminBackgroundColor (or Abg), AdminForegroundColor (or Afg), ErrorBackgroundColor (or Ebg), ErrorForegroundColor (or Efg), Separator, Cap, and Content (also called Object or Text)");
+                    throw new ArgumentException("Unknown key '" + key + "' in " + values.GetType().Name + ". Allowed values are Alignment, Position, BackgroundColor (or bg), ForegroundColor (or fg), AdminBackgroundColor (or Abg), AdminForegroundColor (or Afg), ErrorBackgroundColor (or Ebg), ErrorForegroundColor (or Efg), Separator, Caps, Content (also called Object or Text), Prefix and Postfix");
                 }
             }
         }
@@ -232,7 +249,7 @@ namespace PoshCode
         /// </summary>
         public TerminalBlock(object content)
         {
-            Cap = DefaultCap;
+            Caps = DefaultCapsLeftAligned;
             Separator = DefaultSeparator;
             Content = content;
         }
@@ -249,10 +266,11 @@ namespace PoshCode
                     CacheLength = 0;
                 } else if (value is SpecialBlock) {
                     _cache = value;
-                    CacheLength = (Cap is null ? 0 : _escapeCode.Replace(Cap.ToString(Alignment), "").Length);
+                    CacheLength = Caps is null ? 0 : Caps.Length;
                 } else {
                     _cache = Entities.Decode((string)value);
-                    CacheLength = _escapeCode.Replace((string)_cache, "").Length + (Cap is null ? 0 : _escapeCode.Replace(Cap.ToString(Alignment), "").Length);
+                    CacheLength = _escapeCode.Replace((string)_cache, "").Length +
+                                    (Caps is null ? 0 : Caps.Length);
                 }
             }
         }
@@ -269,18 +287,17 @@ namespace PoshCode
                 return Cache;
             }
             _cacheKey = cacheKey ?? String.Empty;
-            Cache = ReInvoke(Content);
+
+            Cache = Content is SpecialBlock ? Content : Prefix + ReInvoke(Content) + Postfix;
             return Cache;
         }
 
-        private object ReInvoke(object content)
+        private string ReInvoke(object content)
         {
             switch (content)
             {
                 case null:
                     return null;
-                case SpecialBlock bs:
-                    return bs;
                 case String s:
                     return Entities.Decode(s);
                 case ScriptBlock sb:
@@ -293,7 +310,7 @@ namespace PoshCode
                     {
                         if (printSeparator == true)
                         {
-                            result.Append(Separator?.ToString(Alignment) ?? " ");
+                            result.Append(Separator);
                         }
 
                         result.Append(ReInvoke(element));
@@ -316,7 +333,6 @@ namespace PoshCode
                 return null;
             }
 
-            var capString = Cap?.ToString(Alignment);
             var background = BackgroundColor;
             var foreground = ForegroundColor;
 
@@ -325,8 +341,7 @@ namespace PoshCode
                 switch (space)
                 {
                     case SpecialBlock.Spacer:
-                        capString = "\u001b[7m" + capString + "\u001b[27m";
-                        content = string.Empty;
+                        content = "\u001b[7m" + Caps[Alignment] + "\u001b[27m";
                         background = otherBackground;
                         foreground = otherBackground = null;
                         break;
@@ -359,36 +374,32 @@ namespace PoshCode
                 Position?.AppendTo(output);
             }
 
-            // right-aligned blocks prepend their cap
-            if (capString != null && Alignment == BlockAlignment.Right)
+            if (!string.IsNullOrEmpty(Caps?.Left))
             {
                 // use otherBackground, and this background as foreground
                 otherBackground?.AppendTo(output, true);
                 background?.AppendTo(output, false);
-                output.Append(capString);
+                output.Append(Caps.Left);
                 // clear foreground
                 output.Append("\u001b[39m");
             }
 
             background?.AppendTo(output, true);
             foreground?.AppendTo(output, false);
-            output.Append(content?.ToString());
+            output.Append((string)content);
 
-            // left-aligned blocks append their cap
-            if (capString != null && Alignment == BlockAlignment.Left)
+            if (!string.IsNullOrEmpty(Caps?.Right))
             {
                 // clear background
                 output.Append("\u001B[49m");
                 // use otherBackground, and this background as foreground
                 otherBackground?.AppendTo(output, true);
                 background?.AppendTo(output, false);
-                output.Append(capString);
+                output.Append(Caps.Right);
             }
 
             // clear formatting
             output.Append("\u001B[0m");
-
-
 
             return Entities.Decode(output.ToString());
         }
@@ -402,7 +413,7 @@ namespace PoshCode
                     BackgroundColor == other.BackgroundColor) &&
                 (Alignment == other.Alignment) &&
                 (Separator == null && other.Separator == null || Separator.Equals(other.Separator)) &&
-                (Cap == null && other.Cap == null || Cap.Equals(other.Cap));
+                (Caps == null && other.Caps == null || Caps.Equals(other.Caps));
         }
 
         public string ToPsMetadata()
@@ -440,8 +451,8 @@ namespace PoshCode
                     (AdminForegroundColor is null ? "" : $"\nAFg='{AdminForegroundColor}'") +
                     (AdminBackgroundColor is null ? "" : $"\nABg='{AdminBackgroundColor}'") +
                     (Position is null ? "" : "\nPosition='" + Position.ToPsMetadata() + "'") +
-                    (Separator is null ? "" : "\nSeparator='" + Separator.ToPsMetadata() + "'") +
-                    (Cap is null ? "" : "\nCap='" + Cap.ToPsMetadata() + "'") +
+                    (Separator is null ? "" : "\nSeparator='" + Separator + "'") +
+                    (Caps is null ? "" : "\nCap='" + Caps.ToPsMetadata() + "'") +
                     (Alignment == BlockAlignment.Left ? "" : $"\nAlignment='{Alignment}'") +
                     "\nContent=" + objectString +
                     "\n}";
@@ -482,8 +493,8 @@ namespace PoshCode
                     (AdminForegroundColor is null ? "" : $" -AFg '{AdminForegroundColor}'") +
                     (AdminBackgroundColor is null ? "" : $" -ABg '{AdminBackgroundColor}'") +
                     (Position is null ? "" : " -Position '" + Position.ToPsMetadata() + "'") +
-                    (Separator is null ? "" : " -Separator '" + Separator.ToPsMetadata() + "'") +
-                    (Cap is null ? "" : " -Cap '" + Cap.ToPsMetadata() + "'") +
+                    (Separator is null ? "" : " -Separator '" + Separator + "'") +
+                    (Caps is null ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
                     (Alignment == BlockAlignment.Left ? "" : $" -Alignment '{Alignment}'") +
                     " -Content " + objectString;
         }

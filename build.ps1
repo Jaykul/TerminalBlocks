@@ -34,6 +34,17 @@ try {
     $null = $PSBoundParameters.Remove("SkipBinaryBuild")
     $Module = Build-Module @PSBoundParameters -Passthru
 
+    $Folder = Split-Path $Module.Path
+    if (!$SkipBinaryBuild) {
+        Write-Host "## Compiling binary module" -ForegroundColor Cyan
+
+        # dotnet restore
+        dotnet publish -c $Configuration -o "$($Folder)\lib" | Write-Host -ForegroundColor DarkGray
+        # We don't need to ship any of the System DLLs because they're all in PowerShell
+        Get-ChildItem $Folder -Filter System.* -Recurse | Remove-Item
+    }
+    $Folder
+
     Remove-Module $Module.Name -Force -ErrorAction SilentlyContinue
     Import-Module $Module.Path
 
@@ -51,7 +62,7 @@ try {
         @([System.Management.Automation.ProxyCommand]::GetParamBlock($NewTerminalBlock) -split '\${RecallPosition},[\s\r\n]+')[1])
     )
     `$PSBoundParameters['Content'] = { # $($Command.Name)
-    $($Command.ScriptBlock)
+    $($Command.ScriptBlock -replace ([regex]::Escape($CommandParameters)))
     }.GetNewClosure()
 
     # toss all the parameters that came from the command
@@ -67,19 +78,6 @@ try {
     }
     Set-Content $FilePath $ModuleContent
 #>
-
-    $Folder = Split-Path $Module.Path
-
-    if (!$SkipBinaryBuild) {
-        Write-Host "## Compiling binary module" -ForegroundColor Cyan
-
-        # dotnet restore
-        dotnet publish -c $Configuration -o "$($Folder)\lib" | Write-Host -ForegroundColor DarkGray
-        # We don't need to ship any of the System DLLs because they're all in PowerShell
-        Get-ChildItem $Folder -Filter System.* -Recurse | Remove-Item
-    }
-
-    $Folder
 
 } finally {
     Pop-Location -StackName BuildModuleScript

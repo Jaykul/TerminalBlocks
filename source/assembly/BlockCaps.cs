@@ -3,20 +3,20 @@ using System.Management.Automation;
 
 namespace PoshCode
 {
-    public class BlockCap : IEquatable<BlockCap>, IPsMetadataSerializable
+    public class BlockCaps : IEquatable<BlockCaps>, IPsMetadataSerializable
     {
         public string Left { get; set; }
 
         public string Right { get; set; }
 
-        public BlockCap(string caps = null)
+        public BlockCaps(string caps = null)
         {
             FromPsMetadata(caps);
         }
-        public BlockCap(params object[] caps) : this(LanguagePrimitives.ConvertTo<string>(caps[0]), LanguagePrimitives.ConvertTo<string>(caps[1])) { }
-        public BlockCap(string left, string right)
+        public BlockCaps(params object[] caps) : this(LanguagePrimitives.ConvertTo<string>(caps[0]), LanguagePrimitives.ConvertTo<string>(caps[1])) { }
+        public BlockCaps(string left, string right)
         {
-            left = !String.IsNullOrEmpty(left) ? PoshCode.Pansies.Entities.Decode(left) : " ";
+            left = !String.IsNullOrEmpty(left) ? PoshCode.Pansies.Entities.Decode(left) : string.Empty;
             if (right == null)
             {
                 if (left.Length > 1)
@@ -36,17 +36,33 @@ namespace PoshCode
             }
         }
 
-        public string ToString(BlockAlignment alignment)
-        {
-            // If we're right-aligned, use the right cap, and vice-versa
-            return alignment == BlockAlignment.Right ? Right : Left;
+        public int Length {
+            get {
+                return (Left is null ? 0 : Left.Length) + (Right is null ? 0 : Right.Length);
+            }
         }
-
-        // public override string ToString()
-        // {
-        //     // If we're right-aligned, use the right cap, and vice-versa
-        //     return TerminalBlock.Alignment == BlockAlignment.Right ? Right : Left;
-        // }
+        public string this[BlockAlignment alignment] {
+            get {
+                if (alignment == BlockAlignment.Left)
+                {
+                    return Left;
+                }
+                else
+                {
+                    return Right;
+                }
+            }
+            set {
+                if (alignment == BlockAlignment.Left)
+                {
+                    Left = value;
+                }
+                else
+                {
+                    Right = value;
+                }
+            }
+        }
 
         public string ToPsMetadata()
         {
@@ -55,7 +71,7 @@ namespace PoshCode
 
         public void FromPsMetadata(string metadata)
         {
-            metadata = !String.IsNullOrEmpty(metadata) ? PoshCode.Pansies.Entities.Decode(metadata) : " ";
+            metadata = !String.IsNullOrEmpty(metadata) ? PoshCode.Pansies.Entities.Decode(metadata) : string.Empty;
 
             var caps = metadata.Split( new char[] { '\u200D' }, 2);
             if (caps.Length > 1)
@@ -74,14 +90,14 @@ namespace PoshCode
             }
         }
 
-        public bool Equals(BlockCap other)
+        public bool Equals(BlockCaps other)
         {
             return this.Left.Equals(other.Left, StringComparison.Ordinal) && this.Right.Equals(other.Right, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is BlockCap cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
+            return obj is BlockCaps cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
         }
 
         public override int GetHashCode()
@@ -89,12 +105,12 @@ namespace PoshCode
             return (Left + Right).GetHashCode();
         }
 
-        public static bool operator ==(BlockCap left, BlockCap right)
+        public static bool operator ==(BlockCaps left, BlockCaps right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(BlockCap left, BlockCap right)
+        public static bool operator !=(BlockCaps left, BlockCaps right)
         {
             return !(left == right);
         }
