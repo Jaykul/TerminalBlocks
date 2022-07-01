@@ -47,15 +47,15 @@ try {
         $Before = [regex]::Escape(($Command.ScriptBlock.ToString().Split("param(", 2)[1]))
 
         $CommandParameters = [System.Management.Automation.ProxyCommand]::GetParamBlock($Command)
-        $After = "$(if ($CommandParameters) { "$CommandParameters," })
-        $(@([System.Management.Automation.ProxyCommand]::GetParamBlock($NewTerminalBlock) -split '\${RecallPosition},[\s\r\n]+')[1])
+        $After = "$(if ($CommandParameters) { "$CommandParameters," }
+        @([System.Management.Automation.ProxyCommand]::GetParamBlock($NewTerminalBlock) -split '\${RecallPosition},[\s\r\n]+')[1])
     )
     `$PSBoundParameters['Content'] = { # $($Command.Name)
     $($Command.ScriptBlock)
     }.GetNewClosure()
 
     # toss all the parameters that came from the command
-    foreach (`$name in `$Command.Parameters.Keys) {
+    foreach (`$name in '$($Command.Parameters.Keys -join "','")') {
         `$null = `$PSBoundParameters.Remove(`$name)
     }
     [PoshCode.TerminalBlock]`$PSBoundParameters
