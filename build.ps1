@@ -34,6 +34,8 @@ try {
     $null = $PSBoundParameters.Remove("SkipBinaryBuild")
     $Module = Build-Module @PSBoundParameters -Passthru
 
+    . .\source\Generators\ModuleBuilderExtensions.ps1
+
     $Folder = Split-Path $Module.Path
     if (!$SkipBinaryBuild) {
         Write-Host "## Compiling binary module" -ForegroundColor Cyan
@@ -44,40 +46,16 @@ try {
         Get-ChildItem $Folder -Filter System.* -Recurse | Remove-Item
     }
     $Folder
-
-    Remove-Module $Module.Name -Force -ErrorAction SilentlyContinue
-    Import-Module $Module.Path
-
     $FilePath = Join-Path $Module.ModuleBase $Module.RootModule
-    $ModuleContent = Get-Content -Path $FilePath -raw
 
-    $NewTerminalBlock = Get-Command -Name New-TerminalBlock -CommandType Function # -Module $Module.Name
-    foreach ($name in $Module.ExportedFunctions.Keys -match "^Show-") {
-        $Command = Get-Command -Name $Name -CommandType Function -Module $Module.Name | Select-Object -First 1
+    # NewTerminalBlock has the common TerminalBlock parameters and implementation
+    . .\source\Generators\NewTerminalBlock.ps1
+    Merge-FunctionParameter "Show-*", "New-TerminalBlock" NewTerminalBlock
+    Merge-Template "Show-*", "New-TerminalBlock" NewTerminalBlock
 
-        $Before = [regex]::Escape(($Command.ScriptBlock.ToString().Split("param(", 2)[1]))
-
-        $CommandParameters = [System.Management.Automation.ProxyCommand]::GetParamBlock($Command)
-        $After = "$(if ($CommandParameters) { "$CommandParameters," }
-        @([System.Management.Automation.ProxyCommand]::GetParamBlock($NewTerminalBlock) -split '\${RecallPosition},[\s\r\n]+')[1])
-    )
-    `$PSBoundParameters['Content'] = { # $($Command.Name)
-    $($Command.ScriptBlock -replace ([regex]::Escape($CommandParameters)))
-    }.GetNewClosure()
-
-    # toss all the parameters that came from the command
-    foreach (`$name in '$($Command.Parameters.Keys -join "','")') {
-        `$null = `$PSBoundParameters.Remove(`$name)
-    }
-    [PoshCode.TerminalBlock]`$PSBoundParameters
-"
-        # $ModuleContent = $ModuleContent -replace $Before, $After
-        $M = Select-String -Pattern $Before -InputObject $ModuleContent |
-            Select-Object -First 1 -Expand Matches
-        $ModuleContent = $ModuleContent.Remove($m.Index, $m.Length).Insert($m.Index, $after)
-    }
-    Set-Content $FilePath $ModuleContent
-#>
+    # TracingAndErrorHandling has common Write-Information and try/catch
+    . .\source\Generators\TracingAndErrorHandling.ps1
+    Merge-Template "*" TracingAndErrorHandling
 
 } finally {
     Pop-Location -StackName BuildModuleScript

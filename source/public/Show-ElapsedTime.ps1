@@ -8,9 +8,8 @@ function Show-ElapsedTime {
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param(
-        # The command ID to get the execution time for (defaults to the previous command)
-        [Parameter()]
-        [int]$Id,
+        # A string to show before the output.
+        [string]$Prefix = "⏱️",
 
         # A Timespan format pattern such as "{0:ss\.fff}" defaults to "{0:d\d\ h\:mm\:ss\.fff}"
         # See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings
@@ -22,31 +21,28 @@ function Show-ElapsedTime {
         [Parameter(Mandatory, ParameterSetName = 'AutoFormat')]
         [switch]$Autoformat
     )
+    end {
+        $LastCommand = Get-History -Count 1
+        if(!$LastCommand) { return "" }
 
-    if (!$Prefix) { $Prefix = "⏱️" }
-    $null = $PSBoundParameters.Remove("Format")
-    $null = $PSBoundParameters.Remove("Autoformat")
-
-    $LastCommand = Get-History -Count 1 @PSBoundParameters
-    if(!$LastCommand) { return "" }
-
-    $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
-    $Result = if ($Autoformat) {
-        if ($Duration.Days -ne 0) {
-            "{0:d\d\ h\:mm}" -f $Duration
-        } elseif ($Duration.Hours -ne 0) {
-            "{0:h\:mm\:ss}" -f $Duration
-        } elseif ($Duration.Minutes -ne 0) {
-            "{0:m\:ss\.fff}" -f $Duration
-        } elseif ($Duration.Seconds -ne 0) {
-            "{0:s\.fff\s}" -f $Duration
-        } elseif ($Duration.Milliseconds -gt 10) {
-            ("{0:fff\m\s}" -f $Duration).Trim("0")
+        $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
+        $Result = if ($Autoformat) {
+            if ($Duration.Days -ne 0) {
+                "{0:d\d\ h\:mm}" -f $Duration
+            } elseif ($Duration.Hours -ne 0) {
+                "{0:h\:mm\:ss}" -f $Duration
+            } elseif ($Duration.Minutes -ne 0) {
+                "{0:m\:ss\.fff}" -f $Duration
+            } elseif ($Duration.Seconds -ne 0) {
+                "{0:s\.fff\s}" -f $Duration
+            } elseif ($Duration.Milliseconds -gt 10) {
+                ("{0:fff\m\s}" -f $Duration).Trim("0")
+            } else {
+                ("{0:ffffff\μ\s}" -f $Duration).Trim("0")
+            }
         } else {
-            ("{0:ffffff\μ\s}" -f $Duration).Trim("0")
+            $Format -f $Duration
         }
-    } else {
-        $Format -f $Duration
+        $Result
     }
-    $Result
 }

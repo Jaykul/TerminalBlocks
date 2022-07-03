@@ -12,7 +12,7 @@ function Show-Date {
         [Parameter(ParameterSetName = 'SimpleFormat')]
         [string]$Format = "T"
     )
-    if (!$prefix) { $Prefix = "📆" }
-
-    Get-Date -Format $Format
+    end {
+        Get-Date -Format $Format
+    }
 }
