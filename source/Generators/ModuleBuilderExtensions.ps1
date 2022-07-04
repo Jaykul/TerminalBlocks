@@ -48,7 +48,7 @@ class ParameterExtractor : AstVisitor {
                         Name = $parameter.Name
                         StartOffset = $parameter.StartOffset
                         Text =  if (($parameter.StartLineNumber - $FirstLine) -ge $NextLine) {
-                                    Write-Verbose "$($Parameter.Name) By Line"
+                                    Write-Debug "Extracted parameter $($Parameter.Name) with surrounding lines"
                                     # Take lines after the last parameter
                                     $Lines = @($Text[$NextLine..($parameter.EndLineNumber - $FirstLine)].Where{![string]::IsNullOrWhiteSpace($_)})
                                     # If the last line extends past the end of the parameter, trim that line
@@ -58,7 +58,7 @@ class ParameterExtractor : AstVisitor {
                                     # Don't return the commas, we'll add them back later
                                     ($Lines -join "`n").TrimEnd(",")
                                 } else {
-                                    Write-Verbose "$($Parameter.Name) By Text $($parameter.StartLineNumber) - $FirstLine = $($parameter.StartLineNumber - $FirstLine)"
+                                    Write-Debug "Extracted parameter $($Parameter.Name) text exactly"
                                     $parameter.Text.TrimEnd(",")
                                 }
                     }
@@ -80,13 +80,13 @@ class ParameterExtractor : AstVisitor {
 
 class AddParameter : ModuleBuilderAspect {
     [System.Management.Automation.HiddenAttribute()]
-    [ParameterExtractor]$Additional
+    [ParameterExtractor]$AdditionalParameterCache
 
     [ParameterExtractor]GetAdditional() {
-        if (!$this.Additional) {
-            $this.Additional = $this.Aspect
+        if (!$this.AdditionalParameterCache) {
+            $this.AdditionalParameterCache = $this.Aspect
         }
-        return $this.Additional
+        return $this.AdditionalParameterCache
     }
 
     [AstVisitAction] VisitFunctionDefinition([FunctionDefinitionAst]$ast) {
@@ -94,8 +94,8 @@ class AddParameter : ModuleBuilderAspect {
             return [AstVisitAction]::SkipChildren
         }
         $Existing = [ParameterExtractor]$ast
-
-        if (($Text = $this.GetAdditional().Parameters.Where{ $_.Name -notin $Existing.Parameters.Name }.Text -join ",`n`n")) {
+        $Additional = $this.GetAdditional().Parameters.Where{ $_.Name -notin $Existing.Parameters.Name }
+        if (($Text = $Additional.Text -join ",`n`n")) {
             $Replacement = [TextReplace]@{
                 StartOffset = $Existing.InsertOffset
                 EndOffset   = $Existing.InsertOffset
@@ -106,7 +106,7 @@ class AddParameter : ModuleBuilderAspect {
                             }
             }
 
-            Write-Verbose "ToAdd: $($Replacement | Out-String)"
+            Write-Debug "Adding parameters to $($ast.name): $($Additional.Name -join ', ')"
             $this.Replacements.Add($Replacement)
         }
         return [AstVisitAction]::SkipChildren
@@ -124,14 +124,20 @@ class MergeBlocks : ModuleBuilderAspect {
     [NamedBlockAst]$EndBlockTemplate
 
     [List[TextReplace]]Generate([Ast]$ast) {
-        if ($this.BeginBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "Begin" }, $true)) {
-            Write-Verbose "No Aspect for BeginBlock"
+        if (!($this.BeginBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "Begin" }, $false))) {
+            Write-Debug "No Aspect for BeginBlock"
+        } else {
+            Write-Debug "BeginBlock Aspect: $($this.BeginBlockTemplate)"
         }
-        if ($this.ProcessBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "Process" }, $true)) {
-            Write-Verbose "No Aspect for ProcessBlock"
+        if (!($this.ProcessBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "Process" }, $false))) {
+            Write-Debug "No Aspect for ProcessBlock"
+        } else {
+            Write-Debug "ProcessBlock Aspect: $($this.ProcessBlockTemplate)"
         }
-        if ($this.EndBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "End" }, $true)) {
-            Write-Verbose "No Aspect for EndBlock"
+        if (!($this.EndBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "End" }, $false))) {
+            Write-Debug "No Aspect for EndBlock"
+        } else {
+            Write-Debug "EndBlock Aspect: $($this.EndBlockTemplate)"
         }
 
         $ast.Visit($this)
@@ -147,35 +153,46 @@ class MergeBlocks : ModuleBuilderAspect {
         if ($this.BeginBlockTemplate) {
             if ($ast.Body.BeginBlock) {
                 $BeginExtent = $ast.Body.BeginBlock.Extent
-                $BeginBlockText = ("# " + $ast.Name + "`n") + ($BeginExtent.Text -replace "^begin[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n")
+                $BeginBlockText = ($BeginExtent.Text -replace "^begin[\s\r\n]*{|}[\s\r\n]*$", "`n").Trim("`r`n").TrimEnd("`r`n ")
 
                 $Replacement = [TextReplace]@{
                     StartOffset = $BeginExtent.StartOffset
                     EndOffset   = $BeginExtent.EndOffset
-                    Text        = "`n" + $this.BeginBlockTemplate.Extent.Text.Replace("existingcode", $BeginBlockText)
+                    Text        = $this.BeginBlockTemplate.Extent.Text.Replace("existingcode", $BeginBlockText)
                 }
 
                 $this.Replacements.Add( $Replacement )
             } else {
-                Write-Verbose "$($ast.Name) Missing BeginBlock"
+                Write-Debug "$($ast.Name) Missing BeginBlock"
             }
         }
 
         if ($this.ProcessBlockTemplate) {
             if ($ast.Body.ProcessBlock) {
-                $ProcessExtent = $ast.Body.ProcessBlock.Extent
-                Write-Verbose "$($ast.Name) Changing ProcessBlock $($ProcessExtent | fl |out-string)"
-                $ProcessBlockText = $ProcessExtent.Text -replace "^[\s\r\n]*process[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
+                # In a "filter" function, the process block may contain the param block
+                $ProcessBlockExtent = $ast.Body.ProcessBlock.Extent
+
+                if ($ast.Body.ProcessBlock.UnNamed -and $ast.Body.ParamBlock.Extent.Text) {
+                    # Trim the paramBlock out of the end block
+                    $ProcessBlockText = $ProcessBlockExtent.Text.Remove(
+                        $ast.Body.ParamBlock.Extent.StartOffset - $ProcessBlockExtent.StartOffset,
+                        $ast.Body.ParamBlock.Extent.EndOffset - $ast.Body.ParamBlock.Extent.StartOffset)
+                    $StartOffset = $ast.Body.ParamBlock.Extent.EndOffset
+                } else {
+                    # Trim the `process {` ... `}` because we're inserting it into the template process
+                    $ProcessBlockText = ($ProcessBlockExtent.Text -replace "^process[\s\r\n]*{|}[\s\r\n]*$", "`n").Trim("`r`n").TrimEnd("`r`n ")
+                    $StartOffset = $ProcessBlockExtent.StartOffset
+                }
 
                 $Replacement = [TextReplace]@{
-                    StartOffset = $ProcessExtent.StartOffset
-                    EndOffset   = $ProcessExtent.EndOffset
-                    Text        = "`n" + $this.ProcessBlockTemplate.Extent.Text.Replace("existingcode", $ProcessBlockText)
+                    StartOffset = $StartOffset
+                    EndOffset   = $ProcessBlockExtent.EndOffset
+                    Text        = $this.ProcessBlockTemplate.Extent.Text.Replace("existingcode", $ProcessBlockText)
                 }
 
                 $this.Replacements.Add( $Replacement )
             } else {
-                Write-Verbose "$($ast.Name) Missing ProcessBlock"
+                Write-Debug "$($ast.Name) Missing ProcessBlock"
             }
         }
 
@@ -194,18 +211,18 @@ class MergeBlocks : ModuleBuilderAspect {
                     $StartOffset = $ast.Body.ParamBlock.Extent.EndOffset
                 } else {
                     # Trim the `end {` ... `}` because we're inserting it into the template end
-                    $EndBlockText = $EndBlockExtent.Text -replace "^[\s\r\n]*end[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
+                    $EndBlockText = ($EndBlockExtent.Text -replace "^end[\s\r\n]*{|}[\s\r\n]*$", "`n").Trim("`r`n").TrimEnd("`r`n ")
                 }
 
                 $Replacement = [TextReplace]@{
                     StartOffset = $StartOffset
                     EndOffset   = $EndBlockExtent.EndOffset
-                    Text        = "`n" + $this.EndBlockTemplate.Extent.Text.Replace("existingcode", $EndBlockText)
+                    Text        = $this.EndBlockTemplate.Extent.Text.Replace("existingcode", $EndBlockText)
                 }
 
                 $this.Replacements.Add( $Replacement )
             } else {
-                Write-Verbose "$($ast.Name) Missing EndBlock"
+                Write-Debug "$($ast.Name) Missing EndBlock"
             }
         }
 
@@ -230,6 +247,7 @@ function Merge-Aspect {
     )
     begin {
         $RootModulePath = Join-Path $Module.ModuleBase $Module.RootModule
+        if($DebugPreference -eq "Inquire") { $DebugPreference = "Continue" }
     }
     process {
         #! We can't reuse the AST because it needs to be updated after we change it

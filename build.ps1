@@ -53,7 +53,7 @@ try {
     Merge-Aspect AddParameter "Show-*", "New-TerminalBlock" .\source\Generators\NewTerminalBlock.ps1
     Merge-Aspect MergeBlocks "Show-*", "New-TerminalBlock" .\source\Generators\NewTerminalBlock.ps1
     # TracingAndErrorHandling has a simple Write-Information wrapper
-    Merge-Aspect MergeBlocks "*" .\source\Generators\TracingAndErrorHandling.ps1 -Verbose
+    Merge-Aspect MergeBlocks "*" .\source\Generators\TracingAndErrorHandling.ps1
 } finally {
     Pop-Location -StackName BuildModuleScript
 }
