@@ -1,10 +1,9 @@
-function TracingAndErrorHandling {
     [CmdletBinding()]
     param()
     begin {
         Write-Information "Enter $($PSCmdlet.MyInvocation.MyCommand.Name)" -Tags "BeginBlock", "Enter"
         try {
-            existingbegin
+        existingcode
         } catch {
             Write-Information $_ -Tags "BeginBlock", "Exception", "Unhandled"
             throw
@@ -15,7 +14,7 @@ function TracingAndErrorHandling {
     process {
         Write-Information "Enter $($PSCmdlet.MyInvocation.MyCommand.Name)" -Tags "ProcessBlock", "Enter"
         try {
-            existingprocess
+        existingcode
         } catch {
             Write-Information $_ -Tags "ProcessBlock", "Exception", "Unhandled"
             throw
@@ -26,7 +25,7 @@ function TracingAndErrorHandling {
     end {
         Write-Information "Enter $($PSCmdlet.MyInvocation.MyCommand.Name)" -Tags "EndBlock", "Enter"
         try {
-            existingend
+        existingcode
         } catch {
             Write-Information $_ -Tags "EndBlock", "Exception", "Unhandled"
             throw
@@ -34,4 +33,4 @@ function TracingAndErrorHandling {
             Write-Information "Leave $($PSCmdlet.MyInvocation.MyCommand.Name)" -Tags "EndBlock", "Leave"
         }
     }
-}
+

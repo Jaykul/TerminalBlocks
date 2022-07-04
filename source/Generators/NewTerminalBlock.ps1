@@ -1,4 +1,3 @@
-function NewTerminalBlock {
     [CmdletBinding()]
     param(
         [PoshCode.TerminalPosition]$Position,
@@ -67,7 +66,7 @@ function NewTerminalBlock {
     )
     end {
         $PSBoundParameters["Content"] = {
-            existingend
+            existingcode
         }.GetNewClosure()
 
         # Strip common parameters if they're on here (so we can use -Verbose)
@@ -77,4 +76,3 @@ function NewTerminalBlock {
 
         [PoshCode.TerminalBlock]$PSBoundParameters
     }
-}

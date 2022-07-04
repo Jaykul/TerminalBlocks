@@ -34,8 +34,7 @@ try {
     $null = $PSBoundParameters.Remove("SkipBinaryBuild")
     $Module = Build-Module @PSBoundParameters -Passthru
 
-    . .\source\Generators\ModuleBuilderExtensions.ps1
-
+    # Need to build the binary before we try to import the module
     $Folder = Split-Path $Module.Path
     if (!$SkipBinaryBuild) {
         Write-Host "## Compiling binary module" -ForegroundColor Cyan
@@ -48,15 +47,13 @@ try {
     $Folder
     $FilePath = Join-Path $Module.ModuleBase $Module.RootModule
 
+    . .\source\Generators\ModuleBuilderExtensions.ps1
+
     # NewTerminalBlock has the common TerminalBlock parameters and implementation
-    . .\source\Generators\NewTerminalBlock.ps1
-    Merge-FunctionParameter "Show-*", "New-TerminalBlock" NewTerminalBlock
-    Merge-Template "Show-*", "New-TerminalBlock" NewTerminalBlock
-
-    # TracingAndErrorHandling has common Write-Information and try/catch
-    . .\source\Generators\TracingAndErrorHandling.ps1
-    Merge-Template "*" TracingAndErrorHandling
-
+    Merge-Aspect AddParameter "Show-*", "New-TerminalBlock" .\source\Generators\NewTerminalBlock.ps1
+    Merge-Aspect MergeBlocks "Show-*", "New-TerminalBlock" .\source\Generators\NewTerminalBlock.ps1
+    # TracingAndErrorHandling has a simple Write-Information wrapper
+    Merge-Aspect MergeBlocks "*" .\source\Generators\TracingAndErrorHandling.ps1 -Verbose
 } finally {
     Pop-Location -StackName BuildModuleScript
 }

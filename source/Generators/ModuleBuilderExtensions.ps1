@@ -13,6 +13,18 @@ class ParameterPosition {
     [string]$Text
 }
 
+# There should be an abstract class for ModuleBuilderGenerator that has a contract for this:
+class ModuleBuilderAspect : AstVisitor {
+    [List[TextReplace]]$Replacements = @()
+    [ScriptBlock]$Where = { $true }
+    [Ast]$Aspect
+
+    [List[TextReplace]]Generate([Ast]$ast) {
+        $ast.Visit($this)
+        return $this.Replacements
+    }
+}
+
 # Should be called on a block to extract the (first) parameters from that block
 class ParameterExtractor : AstVisitor {
     [ParameterPosition[]]$Parameters = @()
@@ -66,17 +78,13 @@ class ParameterExtractor : AstVisitor {
     }
 }
 
-class MergeParameter : AstVisitor {
-    [List[TextReplace]]$Replacements = @()
-    [ScriptBlock]$Parameters = {}
-    [ScriptBlock]$Where = {$true}
-
+class AddParameter : ModuleBuilderAspect {
     [System.Management.Automation.HiddenAttribute()]
     [ParameterExtractor]$Additional
 
     [ParameterExtractor]GetAdditional() {
-        if(!$this.Additional) {
-            $this.Additional = $this.Parameters.Ast
+        if (!$this.Additional) {
+            $this.Additional = $this.Aspect
         }
         return $this.Additional
     }
@@ -87,46 +95,47 @@ class MergeParameter : AstVisitor {
         }
         $Existing = [ParameterExtractor]$ast
 
-        $ToAdd = $this.GetAdditional().Parameters.Where{ $_.Name -notin $Existing.Parameters.Name }
-        $Replacement = [TextReplace]@{
-            StartOffset = $Existing.InsertOffset
-            EndOffset   = $Existing.InsertOffset
-            Text        = if ($Existing.Parameters.Count -gt 0) {
-                            ",`n" + ($ToAdd.Text -join ",`n")
-                        } else {
-                            "`n" + ($ToAdd.Text -join ",`n")
-                        }
+        if (($Text = $this.GetAdditional().Parameters.Where{ $_.Name -notin $Existing.Parameters.Name }.Text -join ",`n`n")) {
+            $Replacement = [TextReplace]@{
+                StartOffset = $Existing.InsertOffset
+                EndOffset   = $Existing.InsertOffset
+                Text        = if ($Existing.Parameters.Count -gt 0) {
+                                ",`n`n" + $Text
+                            } else {
+                                "`n" + $Text
+                            }
+            }
+
+            Write-Verbose "ToAdd: $($Replacement | Out-String)"
+            $this.Replacements.Add($Replacement)
         }
-
-        Write-Verbose "ToAdd: $($Replacement | Out-String)"
-
-        $this.Replacements.Add($Replacement)
         return [AstVisitAction]::SkipChildren
     }
 }
 
-class MergeBlocks : AstVisitor {
-    [List[TextReplace]]$Replacements = @()
-    [ScriptBlock]$Where = {$true}
-    [ScriptBlock]$Template
+class MergeBlocks : ModuleBuilderAspect {
+    [System.Management.Automation.HiddenAttribute()]
+    [NamedBlockAst]$BeginBlockTemplate
 
     [System.Management.Automation.HiddenAttribute()]
-    [ScriptBlockAst]$TemplateBody
+    [NamedBlockAst]$ProcessBlockTemplate
 
-    [ScriptBlockAst]GetTemplateBody() {
-        if (!$this.TemplateBody) {
-            $this.TemplateBody = $(
-                if ($this.Template.Ast -is [ScriptBlockAst]) {
-                    $this.Template.Ast
-                } elseif ($this.Template.Ast.Body -is [ScriptBlockAst]) {
-                    $this.Template.Ast.Body
-                } else {
-                    Write-Warning "No such body."
-                }
-            )
+    [System.Management.Automation.HiddenAttribute()]
+    [NamedBlockAst]$EndBlockTemplate
+
+    [List[TextReplace]]Generate([Ast]$ast) {
+        if ($this.BeginBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "Begin" }, $true)) {
+            Write-Verbose "No Aspect for BeginBlock"
+        }
+        if ($this.ProcessBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "Process" }, $true)) {
+            Write-Verbose "No Aspect for ProcessBlock"
+        }
+        if ($this.EndBlockTemplate = $this.Aspect.Find({ $args[0] -is [NamedBlockAst] -and $args[0].BlockKind -eq "End" }, $true)) {
+            Write-Verbose "No Aspect for EndBlock"
         }
 
-        return $this.TemplateBody
+        $ast.Visit($this)
+        return $this.Replacements
     }
 
     # The [Alias(...)] attribute on functions matters, but we can't export aliases that are defined inside a function
@@ -135,131 +144,111 @@ class MergeBlocks : AstVisitor {
             return [AstVisitAction]::SkipChildren
         }
 
-        if ($ast.Body.BeginBlock -and $this.GetTemplateBody().BeginBlock) {
-            $BeginExtent = $ast.Body.BeginBlock.Extent
-            $BeginBlockText = $BeginExtent.Text -replace "^[\s\r\n]*begin[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
+        if ($this.BeginBlockTemplate) {
+            if ($ast.Body.BeginBlock) {
+                $BeginExtent = $ast.Body.BeginBlock.Extent
+                $BeginBlockText = ("# " + $ast.Name + "`n") + ($BeginExtent.Text -replace "^begin[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n")
 
-            $Replacement = [TextReplace]@{
-                StartOffset = $BeginExtent.StartOffset
-                EndOffset   = $BeginExtent.EndOffset
-                Text        = "`n" + $this.GetTemplateBody().BeginBlock.Extent.Text.Replace("existingbegin", $BeginBlockText)
-            }
+                $Replacement = [TextReplace]@{
+                    StartOffset = $BeginExtent.StartOffset
+                    EndOffset   = $BeginExtent.EndOffset
+                    Text        = "`n" + $this.BeginBlockTemplate.Extent.Text.Replace("existingcode", $BeginBlockText)
+                }
 
-            $this.Replacements.Add( $Replacement )
-        } else {
-            Write-Verbose "$($ast.Name) Missing BeginBlock"
-        }
-
-        if ($ast.Body.ProcessBlock -and $this.GetTemplateBody().ProcessBlock) {
-            $ProcessExtent = $ast.Body.ProcessBlock.Extent
-            $ProcessBlockText = $ProcessExtent.Text -replace "^[\s\r\n]*process[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
-
-            $Replacement = [TextReplace]@{
-                StartOffset = $ProcessExtent.StartOffset
-                EndOffset   = $ProcessExtent.EndOffset
-                Text        = "`n" + $this.GetTemplateBody().ProcessBlock.Extent.Text.Replace("existingprocess", $ProcessBlockText)
-            }
-
-            $this.Replacements.Add( $Replacement )
-        } else {
-            Write-Verbose "$($ast.Name) Missing ProcessBlock"
-        }
-
-        if ($ast.Body.EndBlock -and $this.GetTemplateBody().EndBlock) {
-            # The end block is a problem because it frequently contains the param block, which must be left alone
-            $EndBlock = $ast.Body.EndBlock
-
-            $EndBlockText = $EndBlock.Extent.Text
-            $StartOffset = $EndBlock.Extent.StartOffset
-            if ($EndBlock.UnNamed -and $ast.Body.ParamBlock.Extent.Text) {
-                $EndBlockText = $EndBlock.Extent.Text -replace ([regex]::Escape($ast.Body.ParamBlock.Extent.Text))
-                $StartOffset = $ast.Body.ParamBlock.Extent.EndOffset
+                $this.Replacements.Add( $Replacement )
             } else {
-                # Trim the `end {` ... `}` because we're inserting it into the template end
-                $EndBlockText = $EndBlock.Extent.Text -replace "^[\s\r\n]*end[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
+                Write-Verbose "$($ast.Name) Missing BeginBlock"
             }
+        }
 
-            $Replacement = [TextReplace]@{
-                StartOffset = $StartOffset
-                EndOffset   = $EndBlock.Extent.EndOffset
-                Text        = "`n" + $this.GetTemplateBody().EndBlock.Extent.Text.Replace("existingend", $EndBlockText)
+        if ($this.ProcessBlockTemplate) {
+            if ($ast.Body.ProcessBlock) {
+                $ProcessExtent = $ast.Body.ProcessBlock.Extent
+                Write-Verbose "$($ast.Name) Changing ProcessBlock $($ProcessExtent | fl |out-string)"
+                $ProcessBlockText = $ProcessExtent.Text -replace "^[\s\r\n]*process[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
+
+                $Replacement = [TextReplace]@{
+                    StartOffset = $ProcessExtent.StartOffset
+                    EndOffset   = $ProcessExtent.EndOffset
+                    Text        = "`n" + $this.ProcessBlockTemplate.Extent.Text.Replace("existingcode", $ProcessBlockText)
+                }
+
+                $this.Replacements.Add( $Replacement )
+            } else {
+                Write-Verbose "$($ast.Name) Missing ProcessBlock"
             }
+        }
 
-            $this.Replacements.Add( $Replacement )
-        } else {
-            Write-Verbose "$($ast.Name) Missing EndBlock"
+        if ($this.EndBlockTemplate) {
+            if ($ast.Body.EndBlock) {
+                # The end block is a problem because it frequently contains the param block, which must be left alone
+                $EndBlockExtent = $ast.Body.EndBlock.Extent
+
+                $EndBlockText = $EndBlockExtent.Text
+                $StartOffset = $EndBlockExtent.StartOffset
+                if ($ast.Body.EndBlock.UnNamed -and $ast.Body.ParamBlock.Extent.Text) {
+                    # Trim the paramBlock out of the end block
+                    $EndBlockText = $EndBlockExtent.Text.Remove(
+                        $ast.Body.ParamBlock.Extent.StartOffset - $EndBlockExtent.StartOffset,
+                        $ast.Body.ParamBlock.Extent.EndOffset - $ast.Body.ParamBlock.Extent.StartOffset)
+                    $StartOffset = $ast.Body.ParamBlock.Extent.EndOffset
+                } else {
+                    # Trim the `end {` ... `}` because we're inserting it into the template end
+                    $EndBlockText = $EndBlockExtent.Text -replace "^[\s\r\n]*end[\s\r\n]*{[\s\r\n]*|[\s\r\n]*}[\s\r\n]*$","`n"
+                }
+
+                $Replacement = [TextReplace]@{
+                    StartOffset = $StartOffset
+                    EndOffset   = $EndBlockExtent.EndOffset
+                    Text        = "`n" + $this.EndBlockTemplate.Extent.Text.Replace("existingcode", $EndBlockText)
+                }
+
+                $this.Replacements.Add( $Replacement )
+            } else {
+                Write-Verbose "$($ast.Name) Missing EndBlock"
+            }
         }
 
         return [AstVisitAction]::SkipChildren
     }
 }
 
-function Merge-FunctionParameter {
+function Merge-Aspect {
     [CmdletBinding()]
     param(
-        # The name of functions to add parameters to. Supports wildcards.
-        [string[]]$ToWhere,
+        # The name of the ModuleBuilder Generator to invoke
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Name,
 
-        # The name of a function (or script) to pull parameters from
-        # E.g. (Get-Command Foo).ScriptBlock
-        [string]$From
+        # The name(s) of functions in the module to run the generator against. Supports wildcards.
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string[]]$FunctionName,
+
+        # The script path or function that contains the base which drives the generator
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Source
     )
-    process {
+    begin {
         $RootModulePath = Join-Path $Module.ModuleBase $Module.RootModule
-
-        #! We can't reuse the AST because it needs to be updated after we change it
-        #! But we can handle this in a wrapper
-        $Ast = &(Get-Module ModuleBuilder) {
-            param($Path)
-            (ConvertToAst $Path).Ast
-        } -Path $RootModulePath
-
-        $function = [MergeParameter]@{
-            Where      = { $Func = $_; $ToWhere.ForEach({ $Func.Name -like $_ }) -contains $true }.GetNewClosure()
-            Parameters = (Get-Command $From).ScriptBlock
-        }
-
-        $Ast.Visit($function)
-
-        #! Process replacements from the bottom up, so the line numbers work
-        $Content = Get-Content $RootModulePath -Raw
-        foreach ($replacement in $function.Replacements | Sort-Object StartOffset -Descending) {
-            $Content = $Content.Insert($replacement.StartOffset, $replacement.Text)
-        }
-        Set-Content $RootModulePath $Content
     }
-}
-
-function Merge-Template {
-    [CmdletBinding()]
-    param(
-        # The name of functions to add parameters to. Supports wildcards.
-        [string[]]$ToWhere,
-
-        # The name of a function (or script) to pull parameters from
-        # E.g. (Get-Command Foo).ScriptBlock
-        [string]$From
-    )
     process {
-        $RootModulePath = Join-Path $Module.ModuleBase $Module.RootModule
-
         #! We can't reuse the AST because it needs to be updated after we change it
         #! But we can handle this in a wrapper
+        Write-Progress -Activity "Parsing $Path"
         $Ast = &(Get-Module ModuleBuilder) {
             param($Path)
             (ConvertToAst $Path).Ast
         } -Path $RootModulePath
 
-        $function = [MergeBlocks]@{
-            Where      = { $Func = $_; $ToWhere.ForEach({ $Func.Name -like $_ }) -contains $true }.GetNewClosure()
-            Template   = (Get-Command $From).ScriptBlock
+        $function = New-Object $Name -Property @{
+            Where = { $Func = $_; $FunctionName.ForEach({ $Func.Name -like $_ }) -contains $true }.GetNewClosure()
+            Aspect  = (Get-Command $Source).ScriptBlock.Ast
         }
-
-        $Ast.Visit($function)
 
         #! Process replacements from the bottom up, so the line numbers work
         $Content = Get-Content $RootModulePath -Raw
-        foreach ($replacement in $function.Replacements | Sort-Object StartOffset -Descending) {
+        Write-Progress -Activity "Generating $Name"
+        foreach ($replacement in $function.Generate($Ast) | Sort-Object StartOffset -Descending) {
             $Content = $Content.Remove($replacement.StartOffset, ($replacement.EndOffset - $replacement.StartOffset)).Insert($replacement.StartOffset, $replacement.Text)
         }
         Set-Content $RootModulePath $Content
