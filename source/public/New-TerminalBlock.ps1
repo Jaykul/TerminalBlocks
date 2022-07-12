@@ -63,6 +63,12 @@ function New-TerminalBlock {
             $null = $PSBoundParameters.Remove($name)
         }
 
-        [PoshCode.TerminalBlock]$PSBoundParameters
+        [PoshCode.TerminalBlock]$PSBoundParameters # |
+        #Add-Member -Passthru -NotePropertyName CommandLine -NotePropertyValue
+        Write-Information $MyInvocation
+        Write-Warning $MyInvocation.Line
+        # Write-Warning $MyInvocation.OffsetInLine
+        # Write-Warning $MyInvocation.PipelineLength
+        # Write-Warning $MyInvocation.PipelinePosition
     }
 }

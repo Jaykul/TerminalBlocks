@@ -42,7 +42,7 @@ namespace PoshCode
         static TerminalBlock()
         {
             // By default, no caps
-            DefaultCapsLeftAligned  = new BlockCaps("", " ");
+            DefaultCapsLeftAligned = new BlockCaps("", " ");
             DefaultCapsRightAligned = new BlockCaps(" ", "");
             DefaultSeparator = " ";
             try
@@ -61,8 +61,18 @@ namespace PoshCode
 
         // TODO: Document Public Properties:
         public TerminalPosition Position { get; set; }
-        public BlockAlignment Alignment { get; set; }
+        public BlockAlignment Alignment {
+            get => alignment;
+            set {
+                alignment = value;
+                if (Caps is null)
+                {
+                    Caps = value == BlockAlignment.Left ? DefaultCapsLeftAligned : DefaultCapsRightAligned;
+                }
+            }
+        }
         public BlockCaps Caps { get; set; }
+        public String MyInvocation { get; set; }
         public String Separator { get; set; }
         public String Prefix { get; set; }
         public String Postfix { get; set; }
@@ -153,13 +163,9 @@ namespace PoshCode
         /// This constructor is here so we can allow partial matches to the property names.
         /// </summary>
         /// <param name="values"></param>
-        public TerminalBlock(IDictionary values) : this("")
+        public TerminalBlock(IDictionary values)
         {
             FromDictionary(values);
-            if (Caps is null) {
-                Caps = Alignment == BlockAlignment.Left ?
-                    DefaultCapsLeftAligned : DefaultCapsRightAligned;
-            }
         }
 
         /// <summary>
@@ -226,6 +232,10 @@ namespace PoshCode
                 {
                     Position = LanguagePrimitives.ConvertTo<TerminalPosition>(values[key]);
                 }
+                else if (Regex.IsMatch("MyInvocation", pattern, RegexOptions.IgnoreCase))
+                {
+                    MyInvocation = LanguagePrimitives.ConvertTo<String>(values[key]);
+                }
                 else if (Regex.IsMatch(key, "persist|entities", RegexOptions.IgnoreCase))
                 {
                     // I once had these properties, but I don't anymore
@@ -235,15 +245,18 @@ namespace PoshCode
                     throw new ArgumentException("Unknown key '" + key + "' in " + values.GetType().Name + ". Allowed values are Alignment, Position, BackgroundColor (or bg), ForegroundColor (or fg), AdminBackgroundColor (or Abg), AdminForegroundColor (or Afg), ErrorBackgroundColor (or Ebg), ErrorForegroundColor (or Efg), Separator, Caps, Content (also called Object or Text), Prefix and Postfix");
                 }
             }
+
+            if (Caps is null)
+            {
+                Caps = Alignment == BlockAlignment.Left ?
+                    DefaultCapsLeftAligned : DefaultCapsRightAligned;
+            }
         }
 
         /// <summary>
-        /// Creates a TerminalBlock that is genuinely empty (and won't output anything)
-        /// Almost all PowerShell classes require the default constructor
-        /// This one probably doesn't, since it has a dictionary constructor
+        /// The default constructor is required for serialization
         /// </summary>
-        public TerminalBlock() : this("") { }
-
+        public TerminalBlock() {}
         /// <summary>
         /// The root constructor takes content
         /// </summary>
@@ -258,16 +271,23 @@ namespace PoshCode
 
         /// <summary>The Cache is always EITHER: null, a string, or a SpecialBlock enum</summary>
 
-        public object Cache {
+        public object Cache
+        {
             get => _cache;
-            private set {
-                if (value is null) {
+            private set
+            {
+                if (value is null)
+                {
                     _cache = value;
                     CacheLength = 0;
-                } else if (value is SpecialBlock) {
+                }
+                else if (value is SpecialBlock)
+                {
                     _cache = value;
                     CacheLength = Caps is null ? 0 : Caps.Length;
-                } else {
+                }
+                else
+                {
                     _cache = Entities.Decode((string)value);
                     CacheLength = _escapeCode.Replace((string)_cache, "").Length +
                                     (Caps is null ? 0 : Caps.Length);
@@ -278,6 +298,7 @@ namespace PoshCode
 
         private object _cacheKey;
         private object _cache;
+        private BlockAlignment alignment;
 
         public object Invoke(object cacheKey = null)
         {
@@ -288,7 +309,21 @@ namespace PoshCode
             }
             _cacheKey = cacheKey ?? String.Empty;
 
-            Cache = Content is SpecialBlock ? Content : Prefix + ReInvoke(Content) + Postfix;
+            if (Content is SpecialBlock)
+            {
+                return Content;
+            }
+
+            var cacheable = ReInvoke(Content);
+            if (string.IsNullOrEmpty(cacheable))
+            {
+                Cache = null;
+            }
+            else
+            {
+                Cache = Prefix + cacheable + Postfix;
+            }
+
             return Cache;
         }
 
@@ -299,7 +334,7 @@ namespace PoshCode
                 case null:
                     return null;
                 case String s:
-                    return Entities.Decode(s);
+                    return string.IsNullOrEmpty(s) ? null : Entities.Decode(s);
                 case ScriptBlock sb:
                     return ReInvoke(sb.Invoke());
                 case IEnumerable enumerable:
@@ -308,18 +343,22 @@ namespace PoshCode
 
                     foreach (object element in enumerable)
                     {
-                        if (printSeparator == true)
+                        var e = ReInvoke(element);
+                        if (!string.IsNullOrEmpty(e))
                         {
-                            result.Append(Separator);
+                            if (printSeparator == true)
+                            {
+                                result.Append(Separator);
+                            }
+                            result.Append(e);
                         }
-
-                        result.Append(ReInvoke(element));
                         printSeparator = true;
                     }
 
                     return result.ToString();
                 default:
-                    return content.ToString();
+                    string stringContent = content.ToString();
+                    return string.IsNullOrEmpty(stringContent) ? null : stringContent;
             }
         }
 
@@ -460,6 +499,10 @@ namespace PoshCode
 
         public string ToPsScript()
         {
+            if (!string.IsNullOrEmpty(MyInvocation))
+            {
+                return MyInvocation;
+            }
 
             var objectString = string.Empty;
             // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
@@ -478,7 +521,7 @@ namespace PoshCode
             }
             else if (Content is ScriptBlock script)
             {
-                objectString = "{" + script.ToString() + "}";
+                objectString = "(ScriptBlock '" + script.ToString().Replace("\'", "\'\'") + "')";
             }
             else
             {

@@ -5,4 +5,5 @@
     OutputDirectory          = "../"
     VersionedOutputDirectory = $true
     CopyDirectories          = @('TerminalBlocks.format.ps1xml')
+    Postfix                  = "Footer.ps1"
 }

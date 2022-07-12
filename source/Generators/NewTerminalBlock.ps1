@@ -74,5 +74,7 @@
             $null = $PSBoundParameters.Remove($name)
         }
 
+        $PSBoundParameters["MyInvocation"] = [System.Management.Automation.InvocationInfo].GetProperty("ScriptPosition", [System.Reflection.BindingFlags]"Instance,NonPublic").GetValue($MyInvocation).Text
+
         [PoshCode.TerminalBlock]$PSBoundParameters
     }

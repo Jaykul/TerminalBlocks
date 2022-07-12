@@ -43,7 +43,7 @@ RequiredModules = @(
     # Make sure we get the fixed version of Metadata
     @{ModuleName="Metadata";      ModuleVersion="1.5.4"}
     @{ModuleName="Configuration"; ModuleVersion="1.5.0"}
-    @{ModuleName="Pansies";       ModuleVersion="2.3.0"}
+    @{ModuleName="Pansies";       ModuleVersion="2.4.0"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 

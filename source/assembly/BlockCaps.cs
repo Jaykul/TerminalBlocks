@@ -9,11 +9,15 @@ namespace PoshCode
 
         public string Right { get; set; }
 
-        public BlockCaps(string caps = null)
-        {
-            FromPsMetadata(caps);
-        }
+        // For IPSMetadataSerializable to work
+        // Also supports hashtable construction
+        public BlockCaps() {}
+        // For string casting to work
+        public BlockCaps(string caps = null) => FromPsMetadata(caps);
+        // For array (of string) casting to work
         public BlockCaps(params object[] caps) : this(LanguagePrimitives.ConvertTo<string>(caps[0]), LanguagePrimitives.ConvertTo<string>(caps[1])) { }
+
+        // The only actual constructor that explicitly sets everything
         public BlockCaps(string left, string right)
         {
             left = !String.IsNullOrEmpty(left) ? PoshCode.Pansies.Entities.Decode(left) : string.Empty;
