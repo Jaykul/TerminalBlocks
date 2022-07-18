@@ -23,7 +23,7 @@
         [String]$Separator,
 
         # The cap character(s) are used on the ends of blocks of output
-        # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
+        # Pass two characters: the first for the left side, the second for the right side.
         [ArgumentCompleter({
                 [System.Collections.Generic.List[System.Management.Automation.CompletionResult]]::new(
                     [System.Management.Automation.CompletionResult[]]@(
