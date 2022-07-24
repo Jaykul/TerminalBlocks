@@ -8,9 +8,51 @@ function Show-PoshGitStatus {
             Configure via $global:GitPromptSettings
     #>
     [OutputType([string])]
-    [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
+    [CmdletBinding()]
     param()
+    dynamicparam {
+        if (Get-Module posh-git) {
+            if ($global:GitPromptSettings) {
+                $Parameters = [Management.Automation.RuntimeDefinedParameterDictionary]::new()
+
+                foreach($Setting in $GitPromptSettings | Get-Member -Type Property) {
+                    if ($Setting.Name -notin $MyInvocation.MyCommand.Parameters.Keys) {
+                        # $Type = $GitPromptSettings.($Setting.Name).GetType()
+                        $Type = $GitPromptSettings.GetType().GetProperty($Setting.Name).PropertyType
+                        if ($Type -eq [bool]) {
+                            $Type = [switch]
+                        }
+
+                        $param = [Management.Automation.RuntimeDefinedParameter]@{
+                            Name          = $Setting.Name
+                            ParameterType = $Type
+                        }
+                        $param.Attributes.Add(
+                            [Parameter]@{
+                                ParameterSetName = "__AllParameterSets"
+                                Mandatory        = $false
+                            }
+                        )
+                        #  $param.Attributes.Add([ValidateSet]::new([String[]]@(...)))
+                        $Parameters.Add($param.Name, $param)
+                    }
+                }
+                $Parameters
+            }
+        }
+    }
+    # Use the BEGIN block for one-time setup that doesn't need to be re-calculated in the prompt every time
+    begin {
+        foreach($param in $PSBoundParameters.Keys) {
+            if ($Parameters.ContainsKey($param)) {
+                $global:GitPromptSettings.$param = $PSBoundParameters[$param]
+            }
+        }
+    }
+    # The end block will be turned into a closure and a TerminalBlock will be created
     end {
-        Write-GitStatus (Get-GitStatus)
+        if (Get-Module posh-git) {
+            Write-GitStatus (Get-GitStatus)
+        }
     }
 }

@@ -23,7 +23,7 @@
         [String]$Separator,
 
         # The cap character(s) are used on the ends of blocks of output
-        # Pass two characters: the first for normal (Left aligned) blocks, the second for right-aligned blocks
+        # Pass two characters: the first for the left side, the second for the right side.
         [ArgumentCompleter({
                 [System.Collections.Generic.List[System.Management.Automation.CompletionResult]]::new(
                     [System.Management.Automation.CompletionResult[]]@(
@@ -64,6 +64,10 @@
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
+    # Use the BEGIN block for one-time setup that doesn't need to be re-calculated in the prompt every time
+    begin {
+        existingcode
+    }
     end {
         $PSBoundParameters["Content"] = {
             existingcode
