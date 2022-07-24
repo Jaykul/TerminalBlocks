@@ -64,6 +64,10 @@
         [AllowNull()][EmptyStringAsNull()]
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
+    # Use the BEGIN block for one-time setup that doesn't need to be re-calculated in the prompt every time
+    begin {
+        existingcode
+    }
     end {
         $PSBoundParameters["Content"] = {
             existingcode
