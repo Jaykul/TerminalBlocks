@@ -6,7 +6,7 @@ function Show-KubeContext {
     [CmdletBinding()]
     param(
         # A string to show before the output.
-        [string]$Prefix = "⎈ "
+        [string]$Prefix = "&nf-mdi-ship_wheel; "
     )
     if (Get-Command kubectl) {
         if (($Context = kubectl config current-context)) {

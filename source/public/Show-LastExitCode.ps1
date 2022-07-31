@@ -10,19 +10,19 @@ function Show-LastExitCode {
     [CmdletBinding()]
     param(
         # A string to show before the output.
-        [string]$Prefix = "💣",
+        [string]$Prefix = "&bomb;",
 
         # If you want to show a status even on successful commands, set this
         [string]$Success = "",
 
         # A string to show when a CommandNotFoundException is thrown.
         # Defaults to "🔍"
-        [string]$NotFound = "🔍",
+        [string]$NotFound = "&magnifyingglasstiltedleft;",
 
         # A string to show when an ApplicationFailedException is thrown.
         # This is typical for non-executable files on 'nix
         # Defaults to "🚫"
-        [string]$NotExecutable = "🚫"
+        [string]$NotExecutable = "&prohibited;"
     )
     # If there was an error ...
     if (-not $? -or -not [PoshCode.TerminalBlock]::LastSuccess) {
