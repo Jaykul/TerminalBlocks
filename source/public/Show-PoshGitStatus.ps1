@@ -11,10 +11,9 @@ function Show-PoshGitStatus {
     [CmdletBinding()]
     param()
     dynamicparam {
+        $Parameters = [Management.Automation.RuntimeDefinedParameterDictionary]::new()
         if (Get-Module posh-git) {
             if ($global:GitPromptSettings) {
-                $Parameters = [Management.Automation.RuntimeDefinedParameterDictionary]::new()
-
                 foreach($Setting in $GitPromptSettings | Get-Member -Type Property) {
                     if ($Setting.Name -notin $MyInvocation.MyCommand.Parameters.Keys) {
                         # $Type = $GitPromptSettings.($Setting.Name).GetType()

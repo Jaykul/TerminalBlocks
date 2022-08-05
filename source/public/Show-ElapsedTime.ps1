@@ -21,6 +21,10 @@ function Show-ElapsedTime {
         [Parameter(Mandatory, ParameterSetName = 'AutoFormat')]
         [switch]$Autoformat
     )
+    begin {
+        # Force a default prefix
+        $PSBoundParameters["Prefix"] = $Prefix
+    }
     end {
         $LastCommand = Get-History -Count 1
         if(!$LastCommand) { return "" }

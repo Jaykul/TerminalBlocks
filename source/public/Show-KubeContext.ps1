@@ -5,12 +5,18 @@ function Show-KubeContext {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output.
+        # A string to show before the output. Defaults to "&nf-mdi-ship_wheel; "
         [string]$Prefix = "&nf-mdi-ship_wheel; "
     )
-    if (Get-Command kubectl) {
-        if (($Context = kubectl config current-context)) {
-            $Context
+    begin {
+        # Force a default prefix
+        $PSBoundParameters["Prefix"] = $Prefix
+    }
+    end {
+        if (Get-Command kubectl) {
+            if (($Context = kubectl config current-context)) {
+                $Context
+            }
         }
     }
 }
