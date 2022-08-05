@@ -4,7 +4,7 @@ param(
     [switch]$SkipCodeCoverage,
     [switch]$HideSuccess,
     [switch]$IncludeVSCodeMarker,
-    $ModuleName = "PromptBlocks"
+    $ModuleName = "TerminalBlocks"
 )
 Push-Location $PSScriptRoot
 
