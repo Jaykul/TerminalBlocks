@@ -41,8 +41,8 @@ try {
 
         # dotnet restore
         dotnet publish -c $Configuration -o "$($Folder)\lib" | Write-Host -ForegroundColor DarkGray
-        # We don't need to ship any of the System DLLs because they're all in PowerShell
-        Get-ChildItem $Folder -Filter System.* -Recurse | Remove-Item
+        # We can't ship the Management DLLs because they're in PowerShell
+        Get-ChildItem $Folder -Filter System.Management.* -Recurse | Remove-Item
     }
     $Folder
     $FilePath = Join-Path $Module.ModuleBase $Module.RootModule

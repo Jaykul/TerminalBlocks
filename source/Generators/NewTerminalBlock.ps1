@@ -2,7 +2,7 @@
     param(
         [PoshCode.TerminalPosition]$Position,
 
-        [PoshCode.BlockAlignment]$Alignment,
+        [PoshCode.BlockAlignment]$Alignment = "Left",
 
         [Alias("Prepend")]
         [String]$Prefix,
