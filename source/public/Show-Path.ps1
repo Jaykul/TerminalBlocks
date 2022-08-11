@@ -53,9 +53,7 @@ function Show-Path {
         $OriginalPath = $Path
         $resolved = Resolve-Path $Path
         $provider = $resolved.Provider
-        if (!$Separator) {
-            $Separator = $provider.ItemSeparator
-        }
+
         $Drive = $resolved.Drive.Name + ":"
         $Path = $resolved.Path
 
@@ -88,9 +86,21 @@ function Show-Path {
                 $Path = Split-Path $Path -NoQualifier
             }
 
-            # Trust the provider's separator
-            [PoshCode.Pansies.Text]$Path = $Path.Trim($provider.ItemSeparator)
-            $Pattern = [regex]::Escape($provider.ItemSeparator)
+            if ($provider.ItemSeparator) {
+                # Trust the provider's separator
+                [PoshCode.Pansies.Text]$Path = $Path.Trim($provider.ItemSeparator)
+                $Pattern = [regex]::Escape($provider.ItemSeparator)
+                if (!$Separator) {
+                    $Separator = $provider.ItemSeparator
+                }
+            } else {
+                # Windows PowerShell
+                [PoshCode.Pansies.Text]$Path = $Path.Trim("\")
+                $Pattern = "\\"
+                if (!$Separator) {
+                    $Separator = "\"
+                }
+            }
 
             if ($SingleLetterPath) {
                 # Remove prefix for UNC paths
