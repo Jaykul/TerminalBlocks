@@ -87,13 +87,13 @@ namespace PoshCode
         {
             get
             {
-                if (!LastSuccess)
+                if (!LastSuccess && null != ErrorForegroundColor)
                 {
-                    return ErrorForegroundColor ?? DefaultBackgroundColor;
+                    return ErrorForegroundColor;
                 }
-                else if (Elevated)
+                else if (Elevated && null != AdminForegroundColor)
                 {
-                    return AdminForegroundColor ?? DefaultBackgroundColor;
+                    return AdminForegroundColor;
                 }
                 else
                 {
