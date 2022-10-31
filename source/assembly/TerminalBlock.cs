@@ -23,7 +23,19 @@ namespace PoshCode
 
     public class TerminalBlock : IPsMetadataSerializable
     {
-        private Regex _escapeCode = new Regex("\u001B\\P{L}+\\p{L}", RegexOptions.Compiled);
+        // Borrowed this from https://github.com/chalk/ansi-regex
+        // private Regex _escapeCode = new Regex("[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))", RegexOptions.Compiled);
+
+        // starting with an escape character and then...
+        // ESC ] <anything> <ST> - where ST is either 1B 5C or 7 (BEL, aka `a)
+        // ESC [ non-letters letter (or ~, =, @, >)
+        // ESC ( <any character>
+        // ESC O P
+        // ESC O Q
+        // ESC O R
+        // ESC O S
+
+        private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001B\\u005C|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
         [ThreadStatic] private static int __rightPad = -1;
         [ThreadStatic] private static int __lastExitCode = 0;
         [ThreadStatic] private static bool __lastSuccess = true;
