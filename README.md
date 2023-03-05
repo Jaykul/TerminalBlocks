@@ -6,6 +6,19 @@ When you convert a TerminalBlock to string, it invokes the script and applies fo
 
 Right now, I am focusing on prompts, and I have written a handful of functions that output terminal blocks for prompts. The generic one is `New-TerminalBlock` which literally just takes a ScriptBlock and all the properties of a TerminalBlock and combines them. The rest actually involve some code-generation...
 
+**Important:** if you're using TerminalBlocks in your prompt, you should use the Initialize-Prompt and Exit-Prompt functions, or set the two "Last" properties at the top of your prompt, and restore them at the end, like this:
+
+```PowerShell
+    # Initialize-Prompt
+    [PoshCode.TerminalBlock]::LastSuccess = $global:?
+    [PoshCode.TerminalBlock]::LastExitCode = $global:LASTEXITCODE
+
+    ...
+
+    # Exit-Prompt
+    $global:LASTEXITCODE = [PoshCode.TerminalBlock]::LastExitCode
+```
+
 ## Aspect-oriented function generation
 
 In this module, I have added a [Generators/ModuleBuildExtensions](Generators/ModuleBuilderExtensions.ps1), which I intend to ship in [ModuleBuilder](https://github.com/PoshCode/ModuleBuilder) eventually -- it adds a `Merge-Aspect` function I can call in my build script, and I use that to combine the functions in the `/Generators` folder with the functions in the `/public` folder.
