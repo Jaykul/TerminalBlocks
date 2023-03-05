@@ -25,7 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- We are only referencing this for the sake of compiling, never ship it -->
-    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="All" />
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Pansies\Pansies.csproj" PrivateAssets="All" />
