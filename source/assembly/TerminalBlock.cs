@@ -89,6 +89,8 @@ namespace PoshCode
         public String Separator { get; set; }
         public String Prefix { get; set; }
         public String Postfix { get; set; }
+        public bool HadErrors { get; set; }
+        public PSDataStreams Streams { get; set; }
         public RgbColor AdminForegroundColor { get; set; }
         public RgbColor AdminBackgroundColor { get; set; }
         public RgbColor ErrorForegroundColor { get; set; }
@@ -349,7 +351,18 @@ namespace PoshCode
                 case String s:
                     return string.IsNullOrEmpty(s) ? null : Entities.Decode(s);
                 case ScriptBlock sb:
-                    return ReInvoke(sb.Invoke());
+                    PowerShell powershell;
+                    try {
+                        powershell = sb.GetPowerShell();
+                    } catch {
+                        return ReInvoke(sb.Invoke());
+                    }
+
+                    var output = powershell.Invoke();
+                    this.HadErrors = powershell.HadErrors;
+                    this.Streams = powershell.Streams;
+                    return ReInvoke(output);
+
                 case IEnumerable enumerable:
                     bool printSeparator = false;
                     StringBuilder result = new StringBuilder();
