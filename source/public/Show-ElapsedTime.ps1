@@ -1,4 +1,4 @@
-function Show-ElapsedTime {
+﻿function Show-ElapsedTime {
     <#
         .SYNOPSIS
             Get the time span elapsed during the execution of command (by default the previous command)
@@ -38,11 +38,12 @@ function Show-ElapsedTime {
             } elseif ($Duration.Minutes -ne 0) {
                 "{0:m\:ss\.fff}" -f $Duration
             } elseif ($Duration.Seconds -ne 0) {
-                "{0:s\.fff\s}" -f $Duration
+                "{0:s\.fff}s" -f $Duration
             } elseif ($Duration.Milliseconds -gt 10) {
-                ("{0:fff\m\s}" -f $Duration).Trim("0")
+                ("{0:fff}ms" -f $Duration).Trim("0")
             } else {
-                ("{0:ffffff\μ\s}" -f $Duration).Trim("0")
+                # 956 is μ (for microsecond), but Windows PowerShell has a hard time with UTF-8 unless there's a BOM, so this is for safety
+                ("{0:ffffff}$([char]956)s" -f $Duration).Trim("0")
             }
         } else {
             $Format -f $Duration
