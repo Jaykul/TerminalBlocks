@@ -41,9 +41,9 @@ NestedModules = @( "lib\TerminalBlocks.dll" )
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata
-    @{ModuleName="Metadata";      ModuleVersion="1.5.4"}
-    @{ModuleName="Configuration"; ModuleVersion="1.5.0"}
-    @{ModuleName="Pansies";       ModuleVersion="2.4.0"}
+    @{ModuleName="Metadata";      ModuleVersion="1.5.7"}
+    @{ModuleName="Configuration"; ModuleVersion="1.5.1"}
+    @{ModuleName="Pansies";       ModuleVersion="2.6.0"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 
@@ -72,7 +72,7 @@ PrivateData = @{
         LicenseUri = 'https://github.com/Jaykul/TerminalBlocks/blob/master/LICENSE'
 
         # A URL to the main website for this project.
-            ProjectUri = 'https://github.com/Jaykul/TerminalBlocks'
+        ProjectUri = 'https://github.com/Jaykul/TerminalBlocks'
 
         # A URL to an icon representing this module.
         # IconUri = ''
@@ -80,6 +80,23 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        ## 1.2.0
+
+        Add support for separate cap backgrounds, so you can match the blocks on both ends of "bar" when bar has caps on both sides: <foo<bar>baz>. Requires calling .ToString(true, leftBackground, rightBackground)
+
+        ## 1.1.0
+
+        The major feature in this release is the ability to detect (and show) errors.
+
+        1. Add Capture errors by caching .GetPowerShell() and calling .Invoke() on it
+        2. Add HadErrors and Streams to TerminalBlocks so you can access that.
+
+        ### In addition, there are a couple new commands to expose static properties
+
+        3. Add Test-Elevation - true if PowerShell is elevated
+        4. Add Test-Success - returns [PoshCode.TerminalBlock]::LastSuccess...
+           Note that you _must_ set this in your prompt function, or it will always be $true
+        5. Fix encoding bug in Show-ElapsedTime in Windows PowerShell
         '
     } # End of PSData hashtable
 } # End of PrivateData hashtable

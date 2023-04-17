@@ -36,15 +36,15 @@ namespace PoshCode
                 // But if one is null, use these other absolute positioning commands
                 if (Row is null)
                 {
-                    return "\u001B" + $"[{Col}G";
+                    return "\u001b" + $"[{Col}G";
                 }
                 else if (Col is null)
                 {
-                    return "\u001B" + $"[{Row}d";
+                    return "\u001b" + $"[{Row}d";
                 }
                 else
                 {
-                    return "\u001B" + $"[{Row};{Col}H";
+                    return "\u001b" + $"[{Row};{Col}H";
                 }
             }
             else
@@ -53,22 +53,22 @@ namespace PoshCode
                 {
                     if (Col > 0)
                     {
-                        return "\u001B" + $"[{Col}C";
+                        return "\u001b" + $"[{Col}C";
                     }
                     else if (Col < 0)
                     {
-                        return "\u001B" + $"[{-Col}D";
+                        return "\u001b" + $"[{-Col}D";
                     }
                 }
                 if (!(Row is null))
                 {
                     if (Row > 0)
                     {
-                        return "\u001B" + $"[{Row}B";
+                        return "\u001b" + $"[{Row}B";
                     }
                     else if (Row < 0)
                     {
-                        return "\u001B" + $"[{-Row}A";
+                        return "\u001b" + $"[{-Row}A";
                     }
                 }
             }
