@@ -24,7 +24,7 @@ namespace PoshCode
     public class TerminalBlock : IPsMetadataSerializable
     {
         // Borrowed this from https://github.com/chalk/ansi-regex
-        // private Regex _escapeCode = new Regex("[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))", RegexOptions.Compiled);
+        // private Regex _escapeCode = new Regex("[\\u001b\\u009b][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))", RegexOptions.Compiled);
 
         // starting with an escape character and then...
         // ESC ] <anything> <ST> - where ST is either 1B 5C or 7 (BEL, aka `a)
@@ -35,7 +35,7 @@ namespace PoshCode
         // ESC O R
         // ESC O S
 
-        private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001B\\u005C|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
+        private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
         [ThreadStatic] private static int __rightPad = -1;
         [ThreadStatic] private static int __lastExitCode = 0;
         [ThreadStatic] private static bool __lastSuccess = true;
@@ -322,7 +322,6 @@ namespace PoshCode
             {
                 return Cache;
             }
-            _cacheKey = cacheKey ?? String.Empty;
 
             if (Content is SpecialBlock)
             {
@@ -330,6 +329,7 @@ namespace PoshCode
             }
 
             var cacheable = ReInvoke(Content);
+            _cacheKey = cacheKey ?? String.Empty;
             if (string.IsNullOrEmpty(cacheable))
             {
                 Cache = null;
@@ -433,8 +433,8 @@ namespace PoshCode
                 if (Alignment == BlockAlignment.Right)
                 {
                     __rightPad += CacheLength;
-                    output.Append($"\u001B[{Console.BufferWidth}G");
-                    output.Append($"\u001B[{__rightPad}D");
+                    output.Append($"\u001b[{Console.BufferWidth}G");
+                    output.Append($"\u001b[{__rightPad}D");
                 }
                 // currently right-aligned, so make a new line
                 else if (__rightPad >= 0)
@@ -462,7 +462,7 @@ namespace PoshCode
             if (!string.IsNullOrEmpty(Caps?.Right))
             {
                 // clear background
-                output.Append("\u001B[49m");
+                output.Append("\u001b[49m");
                 // use rightBackgound, and this background as foreground
                 rightBackgound?.AppendTo(output, true);
                 background?.AppendTo(output, false);
@@ -470,7 +470,7 @@ namespace PoshCode
             }
 
             // clear formatting
-            output.Append("\u001B[0m");
+            output.Append("\u001b[0m");
 
             return Entities.Decode(output.ToString());
         }
