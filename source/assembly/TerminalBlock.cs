@@ -351,18 +351,21 @@ namespace PoshCode
                 case String s:
                     return string.IsNullOrEmpty(s) ? null : Entities.Decode(s);
                 case ScriptBlock sb:
-                    PowerShell powershell;
-                    try {
-                        powershell = sb.GetPowerShell();
-                    } catch {
+                    try
+                    {
+                        PowerShell powershell = PowerShell.Create(RunspaceMode.CurrentRunspace);
+                        powershell.AddScript("& $args[0]").AddArgument(sb);
+                        var output = powershell.Invoke();
+                        this.HadErrors = powershell.HadErrors;
+                        this.Streams = powershell.Streams;
+                        return ReInvoke(output);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.HadErrors = true;
+                        this.Streams.Error.Add(new ErrorRecord(ex, "CannotInvokeOnCurrentRunspace", ErrorCategory.InvalidArgument, sb));
                         return ReInvoke(sb.Invoke());
                     }
-
-                    var output = powershell.Invoke();
-                    this.HadErrors = powershell.HadErrors;
-                    this.Streams = powershell.Streams;
-                    return ReInvoke(output);
-
                 case IEnumerable enumerable:
                     bool printSeparator = false;
                     StringBuilder result = new StringBuilder();
