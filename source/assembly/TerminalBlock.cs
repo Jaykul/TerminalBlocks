@@ -514,7 +514,7 @@ namespace PoshCode
                     ForegroundColor == other.ForegroundColor &&
                     BackgroundColor == other.BackgroundColor) &&
                 (Alignment == other.Alignment) &&
-                (Separator == null && other.Separator == null || Separator.Equals(other.Separator)) &&
+                (Separator == null && other.Separator == null || Separator.Equals(other.Separator, StringComparison.OrdinalIgnoreCase)) &&
                 (Caps == null && other.Caps == null || Caps.Equals(other.Caps));
         }
 
