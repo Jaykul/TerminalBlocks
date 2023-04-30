@@ -354,15 +354,29 @@ namespace PoshCode
                     try
                     {
                         PowerShell powershell = PowerShell.Create(RunspaceMode.CurrentRunspace);
-                        powershell.AddScript("& $args[0]").AddArgument(sb);
-                        var output = powershell.Invoke();
-                        this.HadErrors = powershell.HadErrors;
+                        IList<object> output = new List<object>();
                         this.Streams = powershell.Streams;
+                        this.Streams.ClearStreams();
+                        powershell.AddScript("param($content) & $content").AddParameter("content", sb);
+                        try
+                        {
+                            powershell.Invoke(null, output);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.Streams.Error.Add(new ErrorRecord(ex, "ExceptionFromScriptBlock", ErrorCategory.InvalidArgument, sb));
+                        }
+                        this.HadErrors = powershell.HadErrors;
                         return ReInvoke(output);
                     }
                     catch (Exception ex)
-                    {
+                    {   // I'm no longer sure under what circumstances this might happen
                         this.HadErrors = true;
+                        if (this.Streams == null)
+                        {
+                            PowerShell powershell = PowerShell.Create();
+                            this.Streams = powershell.Streams;
+                        }
                         this.Streams.Error.Add(new ErrorRecord(ex, "CannotInvokeOnCurrentRunspace", ErrorCategory.InvalidArgument, sb));
                         return ReInvoke(sb.Invoke());
                     }
