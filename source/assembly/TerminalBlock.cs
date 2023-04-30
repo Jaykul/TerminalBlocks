@@ -413,7 +413,7 @@ namespace PoshCode
             ToString(position, otherBackgound, otherBackgound, cacheKey);
 
         // new overload requires two "other" background colors (one for each end cap).
-        public string ToString(bool position, RgbColor leftBackgound, RgbColor rightBackgound, object cacheKey = null)
+        public string ToString(bool position, RgbColor previousBackground, RgbColor nextBackground, object cacheKey = null)
         {
             var content = Invoke(cacheKey);
             if (content is null)
@@ -430,8 +430,8 @@ namespace PoshCode
                 {
                     case SpecialBlock.Spacer:
                         content = "\u001b[7m" + Caps[Alignment] + "\u001b[27m";
-                        background = rightBackgound;
-                        foreground = leftBackgound = rightBackgound = null;
+                        background = Alignment == BlockAlignment.Right ? previousBackground : nextBackground;
+                        foreground = previousBackground = nextBackground = null;
                         break;
                     case SpecialBlock.StorePosition:
                         return "\u001b[s";
@@ -464,8 +464,14 @@ namespace PoshCode
 
             if (!string.IsNullOrEmpty(Caps?.Left))
             {
-                // use leftBackgound, and this background as foreground
-                leftBackgound?.AppendTo(output, true);
+                if (Alignment == BlockAlignment.Left)
+                {
+                    previousBackground?.AppendTo(output, true);
+                }
+                else
+                {
+                    nextBackground?.AppendTo(output, true);
+                }
                 background?.AppendTo(output, false);
                 output.Append(Caps.Left);
                 // clear foreground
@@ -480,8 +486,16 @@ namespace PoshCode
             {
                 // clear background
                 output.Append("\u001b[49m");
-                // use rightBackgound, and this background as foreground
-                rightBackgound?.AppendTo(output, true);
+                // use rightBackground, and this background as foreground
+                if (Alignment == BlockAlignment.Right)
+                {
+                    previousBackground?.AppendTo(output, true);
+                }
+                else
+                {
+                    nextBackground?.AppendTo(output, true);
+                }
+                // nextBackground?.AppendTo(output, true);
                 background?.AppendTo(output, false);
                 output.Append(Caps.Right);
             }
