@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,9 +74,11 @@ namespace PoshCode
 
         // TODO: Document Public Properties:
         public TerminalPosition Position { get; set; }
-        public BlockAlignment Alignment {
+        public BlockAlignment Alignment
+        {
             get => alignment;
-            set {
+            set
+            {
                 alignment = value;
                 if (Caps is null)
                 {
@@ -271,7 +273,7 @@ namespace PoshCode
         /// <summary>
         /// The default constructor is required for serialization
         /// </summary>
-        public TerminalBlock() {}
+        public TerminalBlock() { }
         /// <summary>
         /// The root constructor takes content
         /// </summary>
@@ -505,7 +507,6 @@ namespace PoshCode
 
             return Entities.Decode(output.ToString());
         }
-
 
         public bool Equals(TerminalBlock other)
         {
