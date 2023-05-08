@@ -2,7 +2,7 @@ using System;
 
 namespace PoshCode
 {
-    public enum BlockAlignment
+    public enum BlockEnd
     {
         Left,
         Right

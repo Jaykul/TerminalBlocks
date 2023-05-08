@@ -46,9 +46,9 @@ namespace PoshCode
                 return (Left is null ? 0 : new StringInfo(Left).LengthInTextElements) + (Right is null ? 0 : new StringInfo(Right).LengthInTextElements);
             }
         }
-        public string this[BlockAlignment alignment] {
+        public string this[BlockEnd end] {
             get {
-                if (alignment == BlockAlignment.Left)
+                if (end == BlockEnd.Left)
                 {
                     return Left;
                 }
@@ -58,7 +58,7 @@ namespace PoshCode
                 }
             }
             set {
-                if (alignment == BlockAlignment.Left)
+                if (end == BlockEnd.Left)
                 {
                     Left = value;
                 }

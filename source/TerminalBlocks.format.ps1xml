@@ -35,10 +35,6 @@
             <Label>Foreground</Label>
           </TableColumnHeader>
           <TableColumnHeader>
-            <Width>9</Width>
-            <Label>Alignment</Label>
-          </TableColumnHeader>
-          <TableColumnHeader>
             <Width>8</Width>
             <Label>Position</Label>
           </TableColumnHeader>
@@ -61,9 +57,6 @@
                 <ScriptBlock>
                     $_.ForegroundColor.ToVtEscapeSequence($true) + " $([char]27)[0m " + $_.ForegroundColor.ToString()
                 </ScriptBlock>
-              </TableColumnItem>
-              <TableColumnItem>
-                <PropertyName>Alignment</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
                 <ScriptBlock>
