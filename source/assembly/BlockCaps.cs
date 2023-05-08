@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Management.Automation;
 
 namespace PoshCode
@@ -42,7 +43,7 @@ namespace PoshCode
 
         public int Length {
             get {
-                return (Left is null ? 0 : Left.Length) + (Right is null ? 0 : Right.Length);
+                return (Left is null ? 0 : new StringInfo(Left).LengthInTextElements) + (Right is null ? 0 : new StringInfo(Right).LengthInTextElements);
             }
         }
         public string this[BlockAlignment alignment] {

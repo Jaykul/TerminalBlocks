@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Language;
@@ -306,7 +307,8 @@ namespace PoshCode
                 else
                 {
                     _cache = Entities.Decode((string)value);
-                    CacheLength = _escapeCode.Replace((string)_cache, "").Length +
+
+                    CacheLength = (new StringInfo(_escapeCode.Replace((string)_cache, ""))).LengthInTextElements +
                                     (Caps is null ? 0 : Caps.Length);
                 }
             }
@@ -593,8 +595,8 @@ namespace PoshCode
             }
 
             return "New-TerminalBlock" +
-                    (DefaultForegroundColor is null ? "" : $" -DFg '{DefaultForegroundColor}'") +
-                    (DefaultBackgroundColor is null ? "" : $" -DBg '{DefaultBackgroundColor}'") +
+                    (DefaultForegroundColor is null ? "" : $" -Fg '{DefaultForegroundColor}'") +
+                    (DefaultBackgroundColor is null ? "" : $" -Bg '{DefaultBackgroundColor}'") +
                     (ErrorForegroundColor is null ? "" : $" -EFg '{ErrorForegroundColor}'") +
                     (ErrorBackgroundColor is null ? "" : $" -EBg '{ErrorBackgroundColor}'") +
                     (AdminForegroundColor is null ? "" : $" -AFg '{AdminForegroundColor}'") +
