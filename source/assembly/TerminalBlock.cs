@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -79,13 +79,128 @@ namespace PoshCode
         public String Postfix { get; set; }
         public bool HadErrors { get; set; }
         public PSDataStreams Streams { get; set; }
-        public RgbColor AdminForegroundColor { get; set; }
-        public RgbColor AdminBackgroundColor { get; set; }
-        public RgbColor ErrorForegroundColor { get; set; }
-        public RgbColor ErrorBackgroundColor { get; set; }
-        public RgbColor DefaultForegroundColor { get; set; }
-        public RgbColor DefaultBackgroundColor { get; set; }
+        public RgbColor AdminForegroundColor
+        {
+            get => _adminForegroundColor;
+            set
+            {
+                _adminForegroundColor = value;
 
+                if (!string.IsNullOrEmpty(MyInvocation))
+                {
+                    // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
+                    var Replaced = Regex.Replace(MyInvocation, @"-(AdminForegroundColor|AdminFg|AFg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
+                    {
+                        MyInvocation = MyInvocation + " -AFg '" + value.ToString() + "'";
+                    }
+                    else
+                    {
+                        MyInvocation = Replaced;
+                    }
+                }
+            }
+        }
+        public RgbColor AdminBackgroundColor
+        {
+            get => _adminBackgroundColor;
+            set
+            {
+                _adminBackgroundColor = value;
+
+                if (!string.IsNullOrEmpty(MyInvocation))
+                {
+                    // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
+                    var Replaced = Regex.Replace(MyInvocation, @"-(AdminBackgroundColor|AdminBg|ABg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
+                    {
+                        MyInvocation = MyInvocation + " -ABg '" + value.ToString() + "'";
+                    } else {
+                        MyInvocation = Replaced;
+                    }
+                }
+            }
+        }
+        public RgbColor ErrorForegroundColor
+        {
+            get => _errorForegroundColor;
+            set
+            {
+                _errorForegroundColor = value;
+
+                if (!string.IsNullOrEmpty(MyInvocation))
+                {
+                    // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
+                    var Replaced = Regex.Replace(MyInvocation, @"-(ErrorForegroundColor|ErrorFg|EFg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
+                    {
+                        MyInvocation = MyInvocation + " -EFg '" + value.ToString() + "'";
+                    } else {
+                        MyInvocation = Replaced;
+                    }
+                }
+            }
+        }
+        public RgbColor ErrorBackgroundColor
+        {
+            get => _errorBackgroundColor;
+            set
+            {
+                _errorBackgroundColor = value;
+
+                if (!string.IsNullOrEmpty(MyInvocation))
+                {
+                    // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
+                    var Replaced = Regex.Replace(MyInvocation, @"-(ErrorBackgroundColor|ErrorBg|EBg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
+                    {
+                        MyInvocation = MyInvocation + " -EBg '" + value.ToString() + "'";
+                    } else {
+                        MyInvocation = Replaced;
+                    }
+                }
+            }
+        }
+        public RgbColor DefaultForegroundColor
+        {
+            get => _defaultForegroundColor;
+            set
+            {
+                _defaultForegroundColor = value;
+
+                if (!string.IsNullOrEmpty(MyInvocation))
+                {
+                    // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
+                    var Replaced = Regex.Replace(MyInvocation, @"-((?:Default)?ForegroundColor|D?Fg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
+                    {
+                        MyInvocation = MyInvocation + " -Fg '" + value.ToString() + "'";
+                    } else {
+                        MyInvocation = Replaced;
+                    }
+                }
+            }
+        }
+        public RgbColor DefaultBackgroundColor
+        {
+            get => _defaultBackgroundColor;
+            set
+            {
+                _defaultBackgroundColor = value;
+
+                if (!string.IsNullOrEmpty(MyInvocation))
+                {
+                    // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
+                    var Replaced = Regex.Replace(MyInvocation, @"-((?:Default)?BackgroundColor|D?Bg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
+                    {
+                        MyInvocation = MyInvocation + " -Fg '" + value.ToString() + "'";
+                    } else {
+                        MyInvocation = Replaced;
+                    }
+                }
+            }
+        }
         public RgbColor ForegroundColor
         {
             get
@@ -108,7 +223,6 @@ namespace PoshCode
                 DefaultForegroundColor = value;
             }
         }
-
         public RgbColor BackgroundColor
         {
             get
@@ -530,7 +644,7 @@ namespace PoshCode
 
         private string ContentToPsScript(object content) {
             switch (content)
-        {
+            {
                 case null:
                     return "$null";
                 // Rendering a string just means decoding entities
@@ -542,14 +656,14 @@ namespace PoshCode
                     StringBuilder result = new StringBuilder("@(");
 
                     foreach (object element in enumerable)
-            {
+                    {
                         var e = ContentToPsScript(element);
                         if (!string.IsNullOrEmpty(e))
                         {
                             if (printSeparator == true)
                             {
                                 result.Append(",");
-            }
+                            }
                             result.Append(e);
                         }
                         printSeparator = true;
@@ -557,13 +671,13 @@ namespace PoshCode
                     result.Append(")");
                     return result.ToString();
 
-            // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
+                // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
                 case SpecialBlock space:
-                switch (space)
-                {
-                    case SpecialBlock.Spacer:
+                    switch (space)
+                    {
+                        case SpecialBlock.Spacer:
                             return " -Spacer";
-                    case SpecialBlock.NewLine:
+                        case SpecialBlock.NewLine:
                             return " -NewLine";
                         case SpecialBlock.ColumnBreak:
                             return " -ColumnBreak";
@@ -572,16 +686,16 @@ namespace PoshCode
                         case SpecialBlock.RecallPosition:
                             return " -RecallPosition";
                     }
-                        break;
+                    break;
                 case ScriptBlock script:
                     // The mindblowing scriptblock hack
                     return "'{" + script.ToString().Replace("\'", "\'\'") + "}'";
-                }
-            return string.Empty;
             }
+            return string.Empty;
+        }
 
         public string ToPsScript()
-            {
+        {
             if (!string.IsNullOrEmpty(MyInvocation))
             {
                 return MyInvocation;
