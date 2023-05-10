@@ -1,23 +1,4 @@
 <Configuration>
-  <SelectionSets>
-    <SelectionSet>
-      <Name>Prompt</Name>
-      <Types>
-        <TypeName>PoshCode.TerminalBlock[]</TypeName>
-        <TypeName>System.Collections.Generic.List`1[PoshCode.TerminalBlock]</TypeName>
-      </Types>
-    </SelectionSet>
-  </SelectionSets>
-  <DefaultSettings>
-    <EnumerableExpansions>
-      <EnumerableExpansion>
-        <EntrySelectedBy>
-          <SelectionSetName>Prompt</SelectionSetName>
-        </EntrySelectedBy>
-        <Expand>CoreOnly</Expand>
-      </EnumerableExpansion>
-    </EnumerableExpansions>
-  </DefaultSettings>
   <ViewDefinitions>
     <View>
       <Name>TerminalBlock</Name>
@@ -33,10 +14,6 @@
           <TableColumnHeader>
             <Width>10</Width>
             <Label>Foreground</Label>
-          </TableColumnHeader>
-          <TableColumnHeader>
-            <Width>8</Width>
-            <Label>Position</Label>
           </TableColumnHeader>
           <TableColumnHeader>
             <Label>Content</Label>
@@ -60,44 +37,22 @@
               </TableColumnItem>
               <TableColumnItem>
                 <ScriptBlock>
-                    if ($_.Position) {
-                      $_.Position.ToPSMetadata()
+                    if ($_.Content -is [ScriptBlock]) {
+                      $_.ToPSScript() + "$([char]27)[0m"
+                    } else {
+                      [System.Management.Automation.LanguagePrimitives]::ConvertTo($_.Content, [string]).Trim() + "$([char]27)[0m"
                     }
                 </ScriptBlock>
               </TableColumnItem>
               <TableColumnItem>
                 <ScriptBlock>
-                    ("$(if ($_.Content -is [ScriptBlock]) { "{{ {0} }}" } else { "{0}" })" -f ([System.Management.Automation.LanguagePrimitives]::ConvertTo($_.Content, [string]).Trim())) + "$([char]27)[0m"
-                </ScriptBlock>
-              </TableColumnItem>
-              <TableColumnItem>
-                <ScriptBlock>
-                    $_.ToString($false) + "$([char]27)[0m"
+                    $_.ToString() + "$([char]27)[0m"
                 </ScriptBlock>
               </TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
         </TableRowEntries>
       </TableControl>
-    </View>
-    <View>
-      <Name>Prompt</Name>
-      <ViewSelectedBy>
-        <SelectionSetName>Prompt</SelectionSetName>
-      </ViewSelectedBy>
-      <CustomControl>
-        <CustomEntries>
-          <CustomEntry>
-            <CustomItem>
-              <ExpressionBinding>
-                <ScriptBlock>
-                  "$(Write-TerminalBlock $_)"
-                </ScriptBlock>
-              </ExpressionBinding>
-            </CustomItem>
-          </CustomEntry>
-        </CustomEntries>
-      </CustomControl>
     </View>
   </ViewDefinitions>
 </Configuration>
