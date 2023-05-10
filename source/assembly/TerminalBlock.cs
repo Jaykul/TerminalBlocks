@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,16 +36,16 @@ namespace PoshCode
         // ESC O S
 
         private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
-        [ThreadStatic] private static int __rightPad = -1;
-        [ThreadStatic] private static int __lastExitCode = 0;
-        [ThreadStatic] private static bool __lastSuccess = true;
+        [ThreadStatic] private static int? __rightPad;
+        [ThreadStatic] private static int? __lastExitCode;
+        [ThreadStatic] private static bool? __lastSuccess;
         [ThreadStatic] private static string __separator;
         [ThreadStatic] private static BlockCaps __leftCaps;
         [ThreadStatic] private static BlockCaps __rightCaps;
 
         // TODO: Document Static Properties:
-        public static int LastExitCode { get => __lastExitCode; set => __lastExitCode = value; }
-        public static bool LastSuccess { get => __lastSuccess; set => __lastSuccess = value; }
+        public static int LastExitCode { get => __lastExitCode ?? 0; set => __lastExitCode = value; }
+        public static bool LastSuccess { get => __lastSuccess ?? true; set => __lastSuccess = value; }
         public static BlockCaps DefaultCapsLeftAligned { get => __leftCaps; set => __leftCaps = value; }
         public static BlockCaps DefaultCapsRightAligned { get => __rightCaps; set => __rightCaps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
@@ -351,18 +351,35 @@ namespace PoshCode
                 case String s:
                     return string.IsNullOrEmpty(s) ? null : Entities.Decode(s);
                 case ScriptBlock sb:
-                    PowerShell powershell;
-                    try {
-                        powershell = sb.GetPowerShell();
-                    } catch {
+                    try
+                    {
+                        PowerShell powershell = PowerShell.Create(RunspaceMode.CurrentRunspace);
+                        IList<object> output = new List<object>();
+                        this.Streams = powershell.Streams;
+                        this.Streams.ClearStreams();
+                        powershell.AddScript("param($content) & $content").AddParameter("content", sb);
+                        try
+                        {
+                            powershell.Invoke(null, output);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.Streams.Error.Add(new ErrorRecord(ex, "ExceptionFromScriptBlock", ErrorCategory.InvalidArgument, sb));
+                        }
+                        this.HadErrors = powershell.HadErrors;
+                        return ReInvoke(output);
+                    }
+                    catch (Exception ex)
+                    {   // I'm no longer sure under what circumstances this might happen
+                        this.HadErrors = true;
+                        if (this.Streams == null)
+                        {
+                            PowerShell powershell = PowerShell.Create();
+                            this.Streams = powershell.Streams;
+                        }
+                        this.Streams.Error.Add(new ErrorRecord(ex, "CannotInvokeOnCurrentRunspace", ErrorCategory.InvalidArgument, sb));
                         return ReInvoke(sb.Invoke());
                     }
-
-                    var output = powershell.Invoke();
-                    this.HadErrors = powershell.HadErrors;
-                    this.Streams = powershell.Streams;
-                    return ReInvoke(output);
-
                 case IEnumerable enumerable:
                     bool printSeparator = false;
                     StringBuilder result = new StringBuilder();
@@ -432,7 +449,7 @@ namespace PoshCode
             {
                 if (Alignment == BlockAlignment.Right)
                 {
-                    __rightPad += CacheLength;
+                    __rightPad = (__rightPad ?? -1) + CacheLength;
                     output.Append($"\u001b[{Console.BufferWidth}G");
                     output.Append($"\u001b[{__rightPad}D");
                 }
