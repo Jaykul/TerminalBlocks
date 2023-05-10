@@ -66,6 +66,21 @@ function New-TerminalBlock {
             }
         }
 
+        # The mind-blowing scriptblock hack ;-)
+        if ($Content -is [string] -and $Content[0] -eq '{' -and $Content[-1] -eq '}') {
+            $PSBoundParameters["Content"] = [ScriptBlock]::Create($Content.Substring(1, $Content.Length - 2))
+        } elseif (@($Content).Count -gt 1) {
+            $PSBoundParameters["Content"] = @(
+                foreach($item in $Content) {
+                    if ($item -is [string] -and $item[0] -eq '{' -and $item[-1] -eq '}') {
+                        [ScriptBlock]::Create($item.Substring(1, $item.Length - 2))
+                    } else {
+                        $item
+                    }
+                }
+            )
+        }
+
         # Strip common parameters if they're on here (so we can use -Verbose)
         foreach($name in [System.Management.Automation.PSCmdlet]::CommonParameters) {
             $null = $PSBoundParameters.Remove($name)
