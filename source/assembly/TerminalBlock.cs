@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -132,7 +132,6 @@ namespace PoshCode
             }
         }
 
-
         private object _content;
         /// <summary>
         /// Gets or sets the object.
@@ -151,6 +150,10 @@ namespace PoshCode
                 {
                     _content = SpecialBlock.NewLine;
                 }
+                else if (spaceTest.Equals("\t", StringComparison.Ordinal) || spaceTest.Trim().Equals("\"`t\"", StringComparison.Ordinal))
+                {
+                    _content = SpecialBlock.ColumnBreak;
+                }
                 else if (spaceTest.Equals(" ", StringComparison.Ordinal) || spaceTest.Trim().Equals("\" \"", StringComparison.Ordinal))
                 {
                     _content = SpecialBlock.Spacer;
@@ -168,6 +171,8 @@ namespace PoshCode
         /// <param name="values"></param>
         public TerminalBlock(IDictionary values)
         {
+            // Caps = DefaultCaps;
+            // Separator = DefaultSeparator;
             FromDictionary(values);
         }
 
@@ -180,11 +185,11 @@ namespace PoshCode
             foreach (string key in values.Keys)
             {
                 var pattern = "^" + Regex.Escape(key);
-                if ("Abg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("AdminBackgroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("ElevatedBackgroundColor", pattern, RegexOptions.IgnoreCase))
+                if ("Abg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("AdminBackgroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     AdminBackgroundColor = RgbColor.ConvertFrom(values[key]);
                 }
-                else if ("Afg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("AdminForegroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("ElevatedForegroundColor", pattern, RegexOptions.IgnoreCase))
+                else if ("Afg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("AdminForegroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     AdminForegroundColor = RgbColor.ConvertFrom(values[key]);
                 }
@@ -196,11 +201,11 @@ namespace PoshCode
                 {
                     ErrorForegroundColor = RgbColor.ConvertFrom(values[key]);
                 }
-                else if ("bg".Equals(key, StringComparison.OrdinalIgnoreCase) || "Dbg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("DefaultBackgroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase))
+                else if ("Bg".Equals(key, StringComparison.OrdinalIgnoreCase) || "DBg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("DefaultBackgroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     BackgroundColor = RgbColor.ConvertFrom(values[key]);
                 }
-                else if ("fg".Equals(key, StringComparison.OrdinalIgnoreCase) || "Dfg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("DefaultForegroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase))
+                else if ("Fg".Equals(key, StringComparison.OrdinalIgnoreCase) || "DFg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("DefaultForegroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     ForegroundColor = RgbColor.ConvertFrom(values[key]);
                 }
@@ -227,11 +232,7 @@ namespace PoshCode
                 {
                     Caps = LanguagePrimitives.ConvertTo<BlockCaps>(values[key]);
                 }
-                else if (Regex.IsMatch("MyInvocation", pattern, RegexOptions.IgnoreCase))
-                {
-                    MyInvocation = LanguagePrimitives.ConvertTo<String>(values[key]);
-                }
-                else if (Regex.IsMatch(key, "persist|entities", RegexOptions.IgnoreCase))
+                else if (Regex.IsMatch("MyInvocation", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch(key, "persist|entities", RegexOptions.IgnoreCase))
                 {
                     // I once had these properties, but I don't anymore
                 }
@@ -239,6 +240,12 @@ namespace PoshCode
                 {
                     throw new ArgumentException("Unknown key '" + key + "' in " + values.GetType().Name + ". Allowed values are Alignment, Position, BackgroundColor (or bg), ForegroundColor (or fg), AdminBackgroundColor (or Abg), AdminForegroundColor (or Afg), ErrorBackgroundColor (or Ebg), ErrorForegroundColor (or Efg), Separator, Caps, Content (also called Object or Text), Prefix and Postfix");
                 }
+            }
+
+            // Set MyInvocation last, to avoid having it updated by the property setters
+            if (values.Contains("MyInvocation")) {
+
+                MyInvocation = LanguagePrimitives.ConvertTo<String>(values["MyInvocation"]);
             }
         }
 
@@ -288,6 +295,12 @@ namespace PoshCode
 
         private object _cacheKey;
         private object _cache;
+        private RgbColor _defaultBackgroundColor;
+        private RgbColor _defaultForegroundColor;
+        private RgbColor _errorBackgroundColor;
+        private RgbColor _errorForegroundColor;
+        private RgbColor _adminBackgroundColor;
+        private RgbColor _adminForegroundColor;
 
         public object Invoke(object cacheKey = null)
         {
@@ -405,26 +418,28 @@ namespace PoshCode
                 switch (space)
                 {
                     case SpecialBlock.Spacer:
-                        content = "";
-                        break;
-                        // var spacer = new StringBuilder();
-                        // if (!string.IsNullOrEmpty(Caps.Left))
-                        // {
-                        //     leftBackground?.AppendTo(spacer, true);
-                        //     spacer.Append("\u001b[7m" + Caps.Left + "\u001b[27m");
-                        // }
-                        // if (!string.IsNullOrEmpty(Caps.Right))
-                        // {
-                        //     rightBackground?.AppendTo(spacer, true);
-                        //     spacer.Append("\u001b[7m" + Caps.Left + "\u001b[27m");
-                        // }
-                        // return spacer.ToString();
+                        var spacer = new StringBuilder();
+                        if (!string.IsNullOrEmpty(Caps.Left))
+                        {
+                            leftBackground?.AppendTo(spacer);
+                            spacer.Append("\u001b[7m" + Caps.Left + "\u001b[27m");
+                        }
+                        else if (!string.IsNullOrEmpty(Caps.Right))
+                        {
+                            rightBackground?.AppendTo(spacer);
+                            spacer.Append("\u001b[7m" + Caps.Right + "\u001b[27m");
+                        }
+                        // clear formatting
+                        spacer.Append("\u001b[0m");
+                        return spacer.ToString();
                     case SpecialBlock.StorePosition:
                         return "\u001b[s";
                     case SpecialBlock.RecallPosition:
                         return "\u001b[u";
                     case SpecialBlock.NewLine:
                         return "\n";
+                    case SpecialBlock.ColumnBreak:
+                        return "\t";
                 }
             }
 
@@ -486,6 +501,9 @@ namespace PoshCode
                     case SpecialBlock.NewLine:
                         objectString = "\"`n\"";
                         break;
+                    case SpecialBlock.ColumnBreak:
+                        objectString = "\"`t\"";
+                        break;
                 }
             }
             else if (Content is ScriptBlock script)
@@ -510,47 +528,80 @@ namespace PoshCode
                     "\n}";
         }
 
-        public string ToPsScript()
+        private string ContentToPsScript(object content) {
+            switch (content)
         {
+                case null:
+                    return "$null";
+                // Rendering a string just means decoding entities
+                case String s:
+                    return string.IsNullOrEmpty(s) ? "" : "\'" + content.ToString().Replace("\'", "\'\'") + "\'";
+                // Rendering arrays means rendering @(,)
+                case IEnumerable enumerable:
+                    bool printSeparator = false;
+                    StringBuilder result = new StringBuilder("@(");
+
+                    foreach (object element in enumerable)
+            {
+                        var e = ContentToPsScript(element);
+                        if (!string.IsNullOrEmpty(e))
+                        {
+                            if (printSeparator == true)
+                            {
+                                result.Append(",");
+            }
+                            result.Append(e);
+                        }
+                        printSeparator = true;
+                    }
+                    result.Append(")");
+                    return result.ToString();
+
+            // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
+                case SpecialBlock space:
+                switch (space)
+                {
+                    case SpecialBlock.Spacer:
+                            return " -Spacer";
+                    case SpecialBlock.NewLine:
+                            return " -NewLine";
+                        case SpecialBlock.ColumnBreak:
+                            return " -ColumnBreak";
+                        case SpecialBlock.StorePosition:
+                            return " -StorePosition";
+                        case SpecialBlock.RecallPosition:
+                            return " -RecallPosition";
+                    }
+                        break;
+                case ScriptBlock script:
+                    // The mindblowing scriptblock hack
+                    return "'{" + script.ToString().Replace("\'", "\'\'") + "}'";
+                }
+            return string.Empty;
+            }
+
+        public string ToPsScript()
+            {
             if (!string.IsNullOrEmpty(MyInvocation))
             {
                 return MyInvocation;
             }
-
-            var objectString = string.Empty;
-            // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
-            if (Content is SpecialBlock space)
+            string contentString = ContentToPsScript(Content);
+            if (contentString.Length > 1 && contentString[0] != ' ')
             {
-                objectString = "\" \"";
-                switch (space)
-                {
-                    case SpecialBlock.Spacer:
-                        objectString = "\" \"";
-                        break;
-                    case SpecialBlock.NewLine:
-                        objectString = "\"`n\"";
-                        break;
-                }
-            }
-            else if (Content is ScriptBlock script)
-            {
-                objectString = "(ScriptBlock '" + script.ToString().Replace("\'", "\'\'") + "')";
-            }
-            else
-            {
-                objectString = "\'" + Content.ToString().Replace("\'", "\'\'") + "\'";
+                contentString = " -Content " + contentString;
             }
 
             return "New-TerminalBlock" +
+                    (Caps is null || Caps.Equals(DefaultCaps) ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
+                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator) ? "" : " -Separator '" + Separator + "'") +
                     (DefaultForegroundColor is null ? "" : $" -Fg '{DefaultForegroundColor}'") +
                     (DefaultBackgroundColor is null ? "" : $" -Bg '{DefaultBackgroundColor}'") +
+                    contentString +
                     (ErrorForegroundColor is null ? "" : $" -EFg '{ErrorForegroundColor}'") +
                     (ErrorBackgroundColor is null ? "" : $" -EBg '{ErrorBackgroundColor}'") +
                     (AdminForegroundColor is null ? "" : $" -AFg '{AdminForegroundColor}'") +
-                    (AdminBackgroundColor is null ? "" : $" -ABg '{AdminBackgroundColor}'") +
-                    (Separator is null ? "" : " -Separator '" + Separator + "'") +
-                    (Caps is null ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
-                    " -Content " + objectString;
+                    (AdminBackgroundColor is null ? "" : $" -ABg '{AdminBackgroundColor}'");
         }
 
         public void FromPsMetadata(string metadata)

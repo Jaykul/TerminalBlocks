@@ -30,6 +30,10 @@ function New-TerminalBlock {
         [Parameter(Mandatory, ParameterSetName = "Spacer")]
         [switch]$Spacer,
 
+        # A special block that creates a column break in PowerLine
+        [Parameter(Mandatory, ParameterSetName = "ColumnBreak")]
+        [switch]$ColumnBreak,
+
         # A special block that stores the position it would have output at
         [Parameter(Mandatory, ParameterSetName = "StorePosition")]
         [switch]$StorePosition,
@@ -47,6 +51,10 @@ function New-TerminalBlock {
             Spacer {
                 $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::Spacer
                 $null = $PSBoundParameters.Remove("Spacer")
+            }
+            ColumnBreak {
+                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::ColumnBreak
+                $null = $PSBoundParameters.Remove("ColumnBreak")
             }
             StorePosition {
                 $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::StorePosition

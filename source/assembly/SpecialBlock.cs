@@ -10,6 +10,8 @@ namespace PoshCode
 
         StorePosition,
 
-        RecallPosition
+        RecallPosition,
+
+        ColumnBreak
     }
 }
