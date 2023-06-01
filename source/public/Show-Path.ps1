@@ -81,7 +81,7 @@ function Show-Path {
                 # If we're in $HOME, we insist on showing it (using driveName logic)
                 $Drive = ''
                 $DriveName = $false
-                $Path = $HomeString + $Path.Substring($Home.Length)
+                $Path = $HomeString + $Path.Substring($BaseHome.Length)
             } else {
                 $Path = Split-Path $Path -NoQualifier
             }
