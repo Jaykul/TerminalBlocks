@@ -1,18 +1,21 @@
 function Show-Date {
     <#
         .SYNOPSIS
-            Get the time span elapsed during the execution of command (by default the previous command)
+            Get the current date and/or time (by default, just the time).
         .DESCRIPTION
-            Calls Get-History to return a single command and returns the difference between the Start and End execution time
+            Just calls Get-Date and passes the -Format and -AsUTC parameters.
     #>
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param(
         # A DateTime format string such as "h\:mm\:ss". Defaults to "T"
         [Parameter(ParameterSetName = 'SimpleFormat')]
-        [string]$Format = "T"
+        [string]$Format = 'T',
+
+        # Shows the current UTC date (and/or time).
+        [switch]$AsUTC
     )
     end {
-        Get-Date -Format $Format
+        Get-Date -Format $Format -AsUTC:$AsUTC
     }
 }

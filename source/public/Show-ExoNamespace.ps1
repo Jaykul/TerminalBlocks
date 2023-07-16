@@ -1,7 +1,7 @@
-function Show-KubeContext {
+function Show-ExoNamespace {
     <#
         .SYNOPSIS
-            Shows the current kubectl context
+            Shows the current Exchange Online Account Namespace
     #>
     [CmdletBinding()]
     param(
@@ -13,10 +13,12 @@ function Show-KubeContext {
         $PSBoundParameters["Prefix"] = $Prefix
     }
     end {
-        if (Get-Command kubectl -ErrorAction Ignore) {
-            if (($Context = kubectl config current-context)) {
-                $Context
-            }
+        if (Get-Command Get-FederatedOrganizationIdentifier -ErrorAction Ignore) {
+            (Get-FederatedOrganizationIdentifier).AccountNamespace
         }
     }
 }
+
+
+(Get-AcceptedDomain).Where{$_.Default}.Name
+
