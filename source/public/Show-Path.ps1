@@ -60,7 +60,7 @@ function Show-Path {
         $BaseHome = $Provider.Home
         Write-Verbose "ProviderHome: $BaseHome"
 
-        if ($GitDir -and "FileSystem" -eq $Provider.Name -and (Get-Command git)) {
+        if ($GitDir -and "FileSystem" -eq $Provider.Name -and (Get-Command git -ErrorAction Ignore)) {
             Push-Location $OriginalPath
             $toplevel = git rev-parse --show-toplevel 2>$null | Convert-Path
             Write-Verbose "GitDir: $TopLevel"
