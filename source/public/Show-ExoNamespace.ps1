@@ -15,10 +15,9 @@ function Show-ExoNamespace {
     end {
         if (Get-Command Get-FederatedOrganizationIdentifier -ErrorAction Ignore) {
             (Get-FederatedOrganizationIdentifier).AccountNamespace
-        }
+        } <# elseif (Get-Command Get-AcceptedDomain -ErrorAction Ignore) {
+            (Get-AcceptedDomain).Where{ $_.Default }.Name
+        } #>
     }
 }
-
-
-(Get-AcceptedDomain).Where{$_.Default}.Name
 
