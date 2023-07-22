@@ -11,7 +11,7 @@
         [ArgumentCompleter({
                 [System.Collections.Generic.List[System.Management.Automation.CompletionResult]]::new(
                     [System.Management.Automation.CompletionResult[]]@(
-                        # The Consolas-friendly block characters ▌and▐ and ╲ followed by all the extended Terminal cahracters
+                        # The Consolas-friendly block characters ▌and▐ and ╲ followed by all the extended Terminal characters
                         @([string[]][char[]]@(@(0xe0b0..0xe0d4) + @(0x2588..0x259b) + @(0x256d..0x2572))).ForEach({
                                 [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                     ))
@@ -23,7 +23,7 @@
         [ArgumentCompleter({
                 [System.Collections.Generic.List[System.Management.Automation.CompletionResult]]::new(
                     [System.Management.Automation.CompletionResult[]]@(
-                        # The Consolas-friendly block characters ▌and▐ and ╲ followed by all the extended Terminal cahracters
+                        # The Consolas-friendly block characters ▌and▐ and ╲ followed by all the extended Terminal characters
                         @([string[]][char[]]@(@(0xe0b0..0xe0d4) + @(0x2588..0x259b) + @(0x256d..0x2572))).ForEach({
                                 [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                     ))
@@ -33,31 +33,37 @@
         # The foreground color to use when the last command succeeded
         [Alias("ForegroundColor", "Fg", "DFg")]
         [AllowNull()][EmptyStringAsNull()]
+        [ArgumentCompleter([PoshCode.Pansies.Palettes.X11Palette])]
         [PoshCode.Pansies.RgbColor]$DefaultForegroundColor,
 
         # The background color to use when the last command succeeded
         [Alias("BackgroundColor", "Bg", "DBg")]
         [AllowNull()][EmptyStringAsNull()]
+        [ArgumentCompleter([PoshCode.Pansies.Palettes.X11Palette])]
         [PoshCode.Pansies.RgbColor]$DefaultBackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
         [Alias("AdminFg", "AFg")]
         [AllowNull()][EmptyStringAsNull()]
+        [ArgumentCompleter([PoshCode.Pansies.Palettes.X11Palette])]
         [PoshCode.Pansies.RgbColor]$AdminForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
         [Alias("AdminBg", "ABg")]
         [AllowNull()][EmptyStringAsNull()]
+        [ArgumentCompleter([PoshCode.Pansies.Palettes.X11Palette])]
         [PoshCode.Pansies.RgbColor]$AdminBackgroundColor,
 
         # The foreground color to use when the last command failed
         [Alias("ErrorFg", "EFg")]
         [AllowNull()][EmptyStringAsNull()]
+        [ArgumentCompleter([PoshCode.Pansies.Palettes.X11Palette])]
         [PoshCode.Pansies.RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
         [Alias("ErrorBg", "EBg")]
         [AllowNull()][EmptyStringAsNull()]
+        [ArgumentCompleter([PoshCode.Pansies.Palettes.X11Palette])]
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
     # Use the BEGIN block for one-time setup that doesn't need to be re-calculated in the prompt every time
