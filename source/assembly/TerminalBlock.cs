@@ -264,10 +264,6 @@ namespace PoshCode
                 {
                     _content = SpecialBlock.NewLine;
                 }
-                else if (spaceTest.Equals("\t", StringComparison.Ordinal) || spaceTest.Trim().Equals("\"`t\"", StringComparison.Ordinal))
-                {
-                    _content = SpecialBlock.ColumnBreak;
-                }
                 else if (spaceTest.Equals(" ", StringComparison.Ordinal) || spaceTest.Trim().Equals("\" \"", StringComparison.Ordinal))
                 {
                     _content = SpecialBlock.Spacer;
@@ -552,8 +548,6 @@ namespace PoshCode
                         return "\u001b[u";
                     case SpecialBlock.NewLine:
                         return "\n";
-                    case SpecialBlock.ColumnBreak:
-                        return "\t";
                 }
             }
 
@@ -614,9 +608,6 @@ namespace PoshCode
                         break;
                     case SpecialBlock.NewLine:
                         objectString = "\"`n\"";
-                        break;
-                    case SpecialBlock.ColumnBreak:
-                        objectString = "\"`t\"";
                         break;
                 }
             }
@@ -679,8 +670,6 @@ namespace PoshCode
                             return " -Spacer";
                         case SpecialBlock.NewLine:
                             return " -NewLine";
-                        case SpecialBlock.ColumnBreak:
-                            return " -ColumnBreak";
                         case SpecialBlock.StorePosition:
                             return " -StorePosition";
                         case SpecialBlock.RecallPosition:
