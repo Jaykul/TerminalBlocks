@@ -16,6 +16,11 @@ function Show-Date {
         [switch]$AsUTC
     )
     end {
-        Get-Date -Format $Format -AsUTC:$AsUTC
+        # PS5 doesn't have -AsUTC
+        if ($AsUTC) {
+            Get-Date -Format $Format (Get-Date).ToUniversalTime()
+        } else {
+            Get-Date -Format $Format
+        }
     }
 }
