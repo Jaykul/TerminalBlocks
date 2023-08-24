@@ -70,17 +70,22 @@
     begin {
         existingcode
     }
+    # Don't use the PROCESS block, because we don't support pipelining
+    # Do the rendering and output in the end block
     end {
-        $PSBoundParameters["Content"] = {
+        # Support default parameter values
+        $Parameters = Get-ParameterValue
+        $Parameters["Content"] = {
             existingcode
         }.GetNewClosure()
 
         # Strip common parameters if they're on here (so we can use -Verbose)
-        foreach ($name in @($PSBoundParameters.Keys.Where{$_ -notin [PoshCode.TerminalBlock].GetProperties().Name})) {
-            $null = $PSBoundParameters.Remove($name)
+        foreach ($name in @($Parameters.Keys.Where{$_ -notin [PoshCode.TerminalBlock].GetProperties().Name})) {
+            $null = $Parameters.Remove($name)
         }
 
-        $PSBoundParameters["MyInvocation"] = [System.Management.Automation.InvocationInfo].GetProperty("ScriptPosition", [System.Reflection.BindingFlags]"Instance,NonPublic").GetValue($MyInvocation).Text
+        # Store the InvocationInfo for serialization
+        $Parameters["MyInvocation"] = [System.Management.Automation.InvocationInfo].GetProperty("ScriptPosition", [System.Reflection.BindingFlags]"Instance,NonPublic").GetValue($MyInvocation).Text
 
-        [PoshCode.TerminalBlock]$PSBoundParameters
+        [PoshCode.TerminalBlock]$Parameters
     }

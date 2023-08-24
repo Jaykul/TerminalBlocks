@@ -65,13 +65,16 @@ function Show-Path {
             $toplevel = git rev-parse --show-toplevel 2>$null | Convert-Path
             Write-Verbose "GitDir: $TopLevel"
             Write-Verbose "Path: $Path"
-            if (!$LASTEXITCODE -and $Path.StartsWith($TopLevel, "OrdinalIgnoreCase")) {
+            if (!$LastExitCode -and $Path.StartsWith($TopLevel, "OrdinalIgnoreCase")) {
                 $Path = $Path.SubString($TopLevel.Length)
                 # If we're in a gitdir, we insist on showing it (using driveName logic)
                 $Drive = Split-Path $TopLevel -Leaf
                 $DriveName = $true
                 $Depth = $Depth - 1
                 Write-Verbose "Full: $Path"
+            } else {
+                Write-Verbose "Clear LastExitCode $global:LastExitCode"
+                $global:LastExitCode = 0
             }
             Pop-Location
         }
@@ -169,5 +172,6 @@ function Show-Path {
         } else {
             $Path
         }
+        exit 0
     }
 }

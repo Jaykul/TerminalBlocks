@@ -15,12 +15,10 @@ function Show-Date {
         # Shows the current UTC date (and/or time).
         [switch]$AsUTC
     )
-    end {
-        # PS5 doesn't have -AsUTC
-        if ($AsUTC) {
-            Get-Date -Format $Format (Get-Date).ToUniversalTime()
-        } else {
-            Get-Date -Format $Format
-        }
+    # PS5 doesn't have -AsUTC
+    if ($AsUTC) {
+        Get-Date -Format $Format (Get-Date).ToUniversalTime()
+    } else {
+        Get-Date -Format $Format
     }
 }

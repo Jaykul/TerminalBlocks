@@ -37,7 +37,6 @@ namespace PoshCode
         // ESC O S
 
         private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
-        [ThreadStatic] private static int? __rightPad;
         [ThreadStatic] private static int? __lastExitCode;
         [ThreadStatic] private static bool? __lastSuccess;
         [ThreadStatic] private static string __separator;
@@ -170,11 +169,17 @@ namespace PoshCode
 
                 if (!string.IsNullOrEmpty(MyInvocation))
                 {
+                    var stringColor = "$null";
+                    if (null != value)
+                    {
+                        stringColor = value.ToString();
+                    }
+
                     // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
-                    var Replaced = Regex.Replace(MyInvocation, @"-((?:Default)?ForegroundColor|D?Fg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    var Replaced = Regex.Replace(MyInvocation, @"-((?:Default)?ForegroundColor|D?Fg)\s+[^\s]+", "-$1 '" + stringColor + "'", RegexOptions.IgnoreCase);
                     if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
                     {
-                        MyInvocation = MyInvocation + " -Fg '" + value.ToString() + "'";
+                        MyInvocation = MyInvocation + " -Fg '" + stringColor + "'";
                     } else {
                         MyInvocation = Replaced;
                     }
@@ -190,11 +195,15 @@ namespace PoshCode
 
                 if (!string.IsNullOrEmpty(MyInvocation))
                 {
+                    var stringColor = "$null";
+                    if (null != value) {
+                        stringColor = value.ToString();
+                    }
                     // Everything which sets MyInvocation has the New-TerminalBlock parameters, so we'll try to update it...
-                    var Replaced = Regex.Replace(MyInvocation, @"-((?:Default)?BackgroundColor|D?Bg)\s+[^\s]+", "-$1 '" + value.ToString() + "'", RegexOptions.IgnoreCase);
+                    var Replaced = Regex.Replace(MyInvocation, @"-((?:Default)?BackgroundColor|D?Bg)\s+[^\s]+", "-$1 '" + stringColor + "'", RegexOptions.IgnoreCase);
                     if (Replaced.Equals(MyInvocation, StringComparison.Ordinal))
                     {
-                        MyInvocation = MyInvocation + " -Fg '" + value.ToString() + "'";
+                        MyInvocation = MyInvocation + " -Fg '" + stringColor + "'";
                     } else {
                         MyInvocation = Replaced;
                     }
@@ -653,13 +662,13 @@ namespace PoshCode
                         {
                             if (printSeparator == true)
                             {
-                                result.Append(",");
+                                result.Append(',');
                             }
                             result.Append(e);
                         }
                         printSeparator = true;
                     }
-                    result.Append(")");
+                    result.Append(')');
                     return result.ToString();
 
                 // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
@@ -697,7 +706,7 @@ namespace PoshCode
 
             return "New-TerminalBlock" +
                     (Caps is null || Caps.Equals(DefaultCaps) ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
-                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator) ? "" : " -Separator '" + Separator + "'") +
+                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator, StringComparison.Ordinal) ? "" : " -Separator '" + Separator + "'") +
                     (DefaultForegroundColor is null ? "" : $" -Fg '{DefaultForegroundColor}'") +
                     (DefaultBackgroundColor is null ? "" : $" -Bg '{DefaultBackgroundColor}'") +
                     contentString +

@@ -8,7 +8,5 @@ function Show-HostName {
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param()
-    end {
-        [Environment]::MachineName
-    }
+    [Environment]::MachineName
 }

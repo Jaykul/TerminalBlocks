@@ -25,32 +25,26 @@ function Show-LastExitCode {
         # Defaults to "🚫"
         [string]$NotExecutable = "&prohibited;"
     )
-    begin {
-        # Force a default prefix
-        $PSBoundParameters["Prefix"] = $Prefix
-    }
-    end {
-        # If there was an error ...
-        if (-not $? -or -not [PoshCode.TerminalBlock]::LastSuccess) {
-            # We retrieve the InvocationInfo from the most recent error using $global:error[0]
-            if ($LastError = $global:error[0]) {
-                # If History[-1] matches Error[0].ErrorInvocationInfo then the last error was NOT a native command
-                if ($LastError.InvocationInfo -and (Get-History -Count 1).CommandLine -eq $global:error[0].InvocationInfo.Line) {
-                    if ($NotFound -and $LastError.Exception -is [System.Management.Automation.CommandNotFoundException]) {
-                        $NotFound
-                    } elseif ($NotExecutable -and $LastError.Exception -is [System.Management.Automation.ApplicationFailedException]) {
-                        $NotExecutable
-                    }
-                } else {
-                    if ([PoshCode.TerminalBlock]::LastExitCode -gt 0) {
-                        [PoshCode.TerminalBlock]::LastExitCode.ToString()
-                    } elseif ($global:LASTEXITCODE -gt 0) {
-                        $global:LASTEXITCODE
-                    }
+    # If there was an error ...
+    if (-not $? -or -not [PoshCode.TerminalBlock]::LastSuccess) {
+        # We retrieve the InvocationInfo from the most recent error using $global:error[0]
+        if ($LastError = $global:error[0]) {
+            # If History[-1] matches Error[0].ErrorInvocationInfo then the last error was NOT a native command
+            if ($LastError.InvocationInfo -and (Get-History -Count 1).CommandLine -eq $global:error[0].InvocationInfo.Line) {
+                if ($NotFound -and $LastError.Exception -is [System.Management.Automation.CommandNotFoundException]) {
+                    $NotFound
+                } elseif ($NotExecutable -and $LastError.Exception -is [System.Management.Automation.ApplicationFailedException]) {
+                    $NotExecutable
+                }
+            } else {
+                if ([PoshCode.TerminalBlock]::LastExitCode -gt 0) {
+                    [PoshCode.TerminalBlock]::LastExitCode.ToString()
+                } elseif ($global:LASTEXITCODE -gt 0) {
+                    $global:LASTEXITCODE
                 }
             }
-        } elseif ($Success) {
-            $Success
         }
+    } elseif ($Success) {
+        $Success
     }
 }

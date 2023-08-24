@@ -9,15 +9,9 @@ function Show-AzureContext {
         # By default, this block only renders when Az.Accounts is imported.
         [switch]$Force
     )
-    begin {
-        # Force a default prefix
-        $PSBoundParameters["Prefix"] = $Prefix
-    }
-    end {
-        if ($Force -or (Get-Module Az.Accounts)) {
-            if (($Context = Get-AzContext)) {
-                $Context.Name
-            }
+    if ($Force -or (Get-Module Az.Accounts)) {
+        if (($Context = Get-AzContext)) {
+            $Context.Name
         }
     }
 }

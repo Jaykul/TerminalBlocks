@@ -8,7 +8,5 @@ function Show-UserName {
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param()
-    end {
-        [Environment]::UserName
-    }
+    [Environment]::UserName
 }

@@ -21,33 +21,27 @@
         [Parameter(Mandatory, ParameterSetName = 'AutoFormat')]
         [switch]$Autoformat
     )
-    begin {
-        # Force a default prefix
-        $PSBoundParameters["Prefix"] = $Prefix
-    }
-    end {
-        $LastCommand = Get-History -Count 1
-        if(!$LastCommand) { return "" }
+    $LastCommand = Get-History -Count 1
+    if(!$LastCommand) { return "" }
 
-        $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
-        $Result = if ($Autoformat) {
-            if ($Duration.Days -ne 0) {
-                "{0:d\d\ h\:mm}" -f $Duration
-            } elseif ($Duration.Hours -ne 0) {
-                "{0:h\:mm\:ss}" -f $Duration
-            } elseif ($Duration.Minutes -ne 0) {
-                "{0:m\:ss\.fff}" -f $Duration
-            } elseif ($Duration.Seconds -ne 0) {
-                "{0:s\.fff}s" -f $Duration
-            } elseif ($Duration.Milliseconds -gt 10) {
-                ("{0:fff}ms" -f $Duration).Trim("0")
-            } else {
-                # 956 is μ (for microsecond), but Windows PowerShell has a hard time with UTF-8 unless there's a BOM, so this is for safety
-                ("{0:ffffff}$([char]956)s" -f $Duration).Trim("0")
-            }
+    $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
+    $Result = if ($Autoformat) {
+        if ($Duration.Days -ne 0) {
+            "{0:d\d\ h\:mm}" -f $Duration
+        } elseif ($Duration.Hours -ne 0) {
+            "{0:h\:mm\:ss}" -f $Duration
+        } elseif ($Duration.Minutes -ne 0) {
+            "{0:m\:ss\.fff}" -f $Duration
+        } elseif ($Duration.Seconds -ne 0) {
+            "{0:s\.fff}s" -f $Duration
+        } elseif ($Duration.Milliseconds -gt 10) {
+            ("{0:fff}ms" -f $Duration).Trim("0")
         } else {
-            $Format -f $Duration
+            # 956 is μ (for microsecond), but Windows PowerShell has a hard time with UTF-8 unless there's a BOM, so this is for safety
+            ("{0:ffffff}$([char]956)s" -f $Duration).Trim("0")
         }
-        $Result
+    } else {
+        $Format -f $Duration
     }
+    $Result
 }
