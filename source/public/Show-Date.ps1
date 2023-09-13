@@ -4,6 +4,14 @@ function Show-Date {
             Get the current date and/or time (by default, just the time).
         .DESCRIPTION
             Just calls Get-Date and passes the -Format and -AsUTC parameters.
+        .EXAMPLE
+            Show-Date -Format "h\:mm"
+
+            Shows the time in 12 hour format without seconds.
+        .EXAMPLE
+            Show-Date -Format "H\:mm" -AsUTC
+
+            Shows the UTC time in 24 hour format without seconds.
     #>
     [OutputType([string])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]

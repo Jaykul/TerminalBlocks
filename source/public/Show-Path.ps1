@@ -40,7 +40,11 @@ function Show-Path {
         # Optionally, turn it into a hyperlink to the full path.
         # In Windows Terminal, for instance, this makes it show the full path on hover, and open your file manager on ctrl+click
         [Parameter()]
-        [switch]$AsUrl
+        [switch]$AsUrl,
+
+        # The path to show (defaults to $pwd, the present working directory)
+        [Alias("InputObject")]
+        [string]$Path
     )
 
     end {
@@ -48,8 +52,10 @@ function Show-Path {
         if ($Length -le 0 -or $Depth -le 0) {
             return [string]::Empty
         }
+        if (!$Path) {
+            $Path = "$Pwd"
+        }
 
-        [string]$Path = "$Pwd"
         $OriginalPath = $Path
         $resolved = Resolve-Path $Path
         $provider = $resolved.Provider
@@ -61,7 +67,7 @@ function Show-Path {
         Write-Verbose "ProviderHome: $BaseHome"
 
         if ($GitDir -and "FileSystem" -eq $Provider.Name -and (Get-Command git -ErrorAction Ignore)) {
-            Push-Location $OriginalPath
+            Push-Location $OriginalPath -StackName "Show-Path"
             $toplevel = git rev-parse --show-toplevel 2>$null | Convert-Path
             Write-Verbose "GitDir: $TopLevel"
             Write-Verbose "Path: $Path"
@@ -76,7 +82,7 @@ function Show-Path {
                 Write-Verbose "Clear LastExitCode $global:LastExitCode"
                 $global:LastExitCode = 0
             }
-            Pop-Location
+            Pop-Location -StackName "Show-Path"
         }
 
         if ($Path) {
@@ -172,6 +178,5 @@ function Show-Path {
         } else {
             $Path
         }
-        exit 0
     }
 }

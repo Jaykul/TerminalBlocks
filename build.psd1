@@ -4,6 +4,6 @@
     ModuleManifest           = "Source/TerminalBlocks.psd1"
     OutputDirectory          = "../"
     VersionedOutputDirectory = $true
-    CopyDirectories          = @('examples','TerminalBlocks.format.ps1xml')
+    CopyDirectories          = @('examples','TerminalBlocks.format.ps1xml', 'SessionState.ps1')
     Postfix                  = "Footer.ps1"
 }

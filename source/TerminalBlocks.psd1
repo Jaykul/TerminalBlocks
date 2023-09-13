@@ -28,7 +28,7 @@ Description = 'PowerShell Native Prompt Blocks'
 PowerShellVersion = '5.1.0'
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
-# ScriptsToProcess = @()
+ScriptsToProcess = @("SessionState.ps1")
 
 # Type files (.ps1xml) to be loaded when importing this module
 # TypesToProcess = @("PowerLine.types.ps1xml")
@@ -37,7 +37,7 @@ PowerShellVersion = '5.1.0'
 FormatsToProcess = @("TerminalBlocks.format.ps1xml")
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @( "lib\TerminalBlocks.dll" )
+# NestedModules = @( "lib\TerminalBlocks.dll" )
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata
@@ -45,7 +45,7 @@ RequiredModules = @(
     @{ModuleName="Configuration"; ModuleVersion="1.5.1"}
     @{ModuleName="Pansies";       ModuleVersion="2.6.0"}
 )
-# RequiredAssemblies = "lib\PowerLine.dll"
+RequiredAssemblies = "lib\TerminalBlocks.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @()

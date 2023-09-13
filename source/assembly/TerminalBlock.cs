@@ -37,16 +37,18 @@ namespace PoshCode
         // ESC O S
 
         private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
-        [ThreadStatic] private static int? __lastExitCode;
-        [ThreadStatic] private static bool? __lastSuccess;
+        //[ThreadStatic] private static int? __lastExitCode;
+        //[ThreadStatic] private static bool? __lastSuccess;
         [ThreadStatic] private static string __separator;
         [ThreadStatic] private static BlockCaps __caps;
+        [ThreadStatic] private static SessionState __globalSessionState;
 
         // TODO: Document Static Properties:
-        public static int LastExitCode { get => __lastExitCode ?? 0; set => __lastExitCode = value; }
-        public static bool LastSuccess { get => __lastSuccess ?? true; set => __lastSuccess = value; }
+        public static int LastExitCode { get => (int)__globalSessionState.PSVariable.GetValue("LastExitCode"); }
+        public static bool LastSuccess { get => (bool)__globalSessionState.PSVariable.GetValue("?"); }
         public static BlockCaps DefaultCaps { get => __caps; set => __caps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
+        public static SessionState GlobalSessionState { get => __globalSessionState; set => __globalSessionState = value; }
 
         public static bool Elevated { get; }
         static TerminalBlock()
@@ -57,7 +59,7 @@ namespace PoshCode
             try
             {
                 // Elevated = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
-                Elevated = (new WindowsPrincipal(WindowsIdentity.GetCurrent())).IsInRole(WindowsBuiltInRole.Administrator);
+                Elevated = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             }
             catch
             {
@@ -538,14 +540,15 @@ namespace PoshCode
                 {
                     case SpecialBlock.Spacer:
                         var spacer = new StringBuilder();
+                        foreground?.AppendTo(spacer, true);
                         if (!string.IsNullOrEmpty(Caps.Left))
                         {
-                            leftBackground?.AppendTo(spacer);
+                            (leftBackground ?? background)?.AppendTo(spacer);
                             spacer.Append("\u001b[7m" + Caps.Left + "\u001b[27m");
                         }
                         else if (!string.IsNullOrEmpty(Caps.Right))
                         {
-                            rightBackground?.AppendTo(spacer);
+                            (rightBackground ?? background)?.AppendTo(spacer);
                             spacer.Append("\u001b[7m" + Caps.Right + "\u001b[27m");
                         }
                         // clear formatting
