@@ -335,7 +335,7 @@ namespace PoshCode
                         Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) ||
                         Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {
-                    _content = values[key];
+                    Content = values[key];
                 }
                 else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase))
                 {
