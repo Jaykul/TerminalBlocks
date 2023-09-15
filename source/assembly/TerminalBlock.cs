@@ -607,42 +607,26 @@ namespace PoshCode
 
         public string ToPsMetadata()
         {
-
-            var objectString = string.Empty;
-            // ToDictionary and Constructor handle single-character strings (with quotes) for PromptSpace
-            if (Content is SpecialBlock space)
+            if (!string.IsNullOrEmpty(MyInvocation))
             {
-                objectString = "\" \"";
-                switch (space)
-                {
-                    case SpecialBlock.Spacer:
-                        objectString = "\" \"";
-                        break;
-                    case SpecialBlock.NewLine:
-                        objectString = "\"`n\"";
-                        break;
-                }
+                return MyInvocation;
             }
-            else if (Content is ScriptBlock script)
+            string contentString = ContentToPsScript(Content);
+            if (contentString.Length > 1 && contentString[0] != ' ')
             {
-                objectString = "(ScriptBlock '" + script.ToString().Replace("\'", "\'\'") + "')";
-            }
-            else
-            {
-                objectString = "\'" + Content.ToString().Replace("\'", "\'\'") + "\'";
+                contentString = " -Content " + contentString;
             }
 
-            return "@{" +
-                    (DefaultForegroundColor is null ? "" : $"\nFg='{DefaultForegroundColor}'") +
-                    (DefaultBackgroundColor is null ? "" : $"\nBg='{DefaultBackgroundColor}'") +
-                    (ErrorForegroundColor is null ? "" : $"\nEFg='{ErrorForegroundColor}'") +
-                    (ErrorBackgroundColor is null ? "" : $"\nEBg='{ErrorBackgroundColor}'") +
-                    (AdminForegroundColor is null ? "" : $"\nAFg='{AdminForegroundColor}'") +
-                    (AdminBackgroundColor is null ? "" : $"\nABg='{AdminBackgroundColor}'") +
-                    (Separator is null ? "" : "\nSeparator='" + Separator + "'") +
-                    (Caps is null ? "" : "\nCap='" + Caps.ToPsMetadata() + "'") +
-                    "\nContent=" + objectString +
-                    "\n}";
+            return "New-TerminalBlock" +
+                    (Caps is null || Caps.Equals(DefaultCaps) ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
+                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator, StringComparison.Ordinal) ? "" : " -Separator '" + Separator + "'") +
+                    (DefaultForegroundColor is null ? "" : $" -Fg '{DefaultForegroundColor}'") +
+                    (DefaultBackgroundColor is null ? "" : $" -Bg '{DefaultBackgroundColor}'") +
+                    (ErrorForegroundColor is null ? "" : $" -EFg '{ErrorForegroundColor}'") +
+                    (ErrorBackgroundColor is null ? "" : $" -EBg '{ErrorBackgroundColor}'") +
+                    (AdminForegroundColor is null ? "" : $" -AFg '{AdminForegroundColor}'") +
+                    (AdminBackgroundColor is null ? "" : $" -ABg '{AdminBackgroundColor}'") +
+                    contentString;
         }
 
         private string ContentToPsScript(object content) {
@@ -689,48 +673,56 @@ namespace PoshCode
                     }
                     break;
                 case ScriptBlock script:
-                    // The mindblowing scriptblock hack
+                    // The terrifying scriptblock hack
                     return "'{" + script.ToString().Replace("\'", "\'\'") + "}'";
             }
             return string.Empty;
-        }
-
-        public string ToPsScript()
-        {
-            if (!string.IsNullOrEmpty(MyInvocation))
-            {
-                return MyInvocation;
-            }
-            string contentString = ContentToPsScript(Content);
-            if (contentString.Length > 1 && contentString[0] != ' ')
-            {
-                contentString = " -Content " + contentString;
-            }
-
-            return "New-TerminalBlock" +
-                    (Caps is null || Caps.Equals(DefaultCaps) ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
-                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator, StringComparison.Ordinal) ? "" : " -Separator '" + Separator + "'") +
-                    (DefaultForegroundColor is null ? "" : $" -Fg '{DefaultForegroundColor}'") +
-                    (DefaultBackgroundColor is null ? "" : $" -Bg '{DefaultBackgroundColor}'") +
-                    contentString +
-                    (ErrorForegroundColor is null ? "" : $" -EFg '{ErrorForegroundColor}'") +
-                    (ErrorBackgroundColor is null ? "" : $" -EBg '{ErrorBackgroundColor}'") +
-                    (AdminForegroundColor is null ? "" : $" -AFg '{AdminForegroundColor}'") +
-                    (AdminBackgroundColor is null ? "" : $" -ABg '{AdminBackgroundColor}'");
         }
 
         public void FromPsMetadata(string metadata)
         {
             var ps = PowerShell.Create(RunspaceMode.CurrentRunspace);
             var languageMode = ps.Runspace.SessionStateProxy.LanguageMode;
-            Hashtable data;
+            TerminalBlock data;
             try
             {
                 ps.Runspace.SessionStateProxy.LanguageMode = PSLanguageMode.RestrictedLanguage;
                 ps.AddScript(metadata, true);
-                data = ps.Invoke<Hashtable>().FirstOrDefault();
+                data = ps.Invoke<TerminalBlock>().FirstOrDefault();
 
-                FromDictionary(data);
+                Caps = data.Caps;
+                MyInvocation = data.MyInvocation;
+                Separator = data.Separator;
+                Prefix = data.Prefix;
+                Postfix = data.Postfix;
+
+                if (null != data.AdminBackgroundColor)
+                {
+                    AdminBackgroundColor = data.AdminBackgroundColor;
+                }
+                if (null != data.AdminForegroundColor)
+                {
+                    AdminForegroundColor = data.AdminForegroundColor;
+                }
+                if (null != data.ErrorBackgroundColor)
+                {
+                    ErrorBackgroundColor = data.ErrorBackgroundColor;
+                }
+                if (null != data.ErrorForegroundColor)
+                {
+                    ErrorForegroundColor = data.ErrorForegroundColor;
+                }
+                if (null != data.DefaultBackgroundColor)
+                {
+                    DefaultBackgroundColor = data.DefaultBackgroundColor;
+                }
+                if (null != data.DefaultForegroundColor)
+                {
+                    DefaultForegroundColor = data.DefaultForegroundColor;
+                }
+
+                Content = data.Content;
+
             }
             finally
             {
