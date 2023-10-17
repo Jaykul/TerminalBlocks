@@ -51,7 +51,7 @@ function Show-PoshGitStatus {
     # The end block will be turned into a closure and a TerminalBlock will be created
     end {
         if (Get-Module posh-git) {
-            Write-GitStatus (Get-GitStatus)
+            posh-git\Write-GitStatus (posh-git\Get-GitStatus)
         }
     }
 }
