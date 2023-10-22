@@ -16,7 +16,7 @@ function Get-CursorPosition {
     [PSCustomObject]@{
         Row = [int]$Row
         Col = [int]$Col
-        Page = $Page ?? 1
+        Page = if ($Page) { $Page } else { 1 }
         X = $Col
         Y = $Row
     }
