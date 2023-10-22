@@ -618,14 +618,14 @@ namespace PoshCode
             }
 
             return "New-TerminalBlock" +
-                    (Caps is null || Caps.Equals(DefaultCaps) ? "" : " -Cap '" + Caps.ToPsMetadata() + "'") +
-                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator, StringComparison.Ordinal) ? "" : " -Separator '" + Separator + "'") +
-                    (DefaultForegroundColor is null ? "" : $" -Fg '{DefaultForegroundColor}'") +
-                    (DefaultBackgroundColor is null ? "" : $" -Bg '{DefaultBackgroundColor}'") +
-                    (ErrorForegroundColor is null ? "" : $" -EFg '{ErrorForegroundColor}'") +
-                    (ErrorBackgroundColor is null ? "" : $" -EBg '{ErrorBackgroundColor}'") +
-                    (AdminForegroundColor is null ? "" : $" -AFg '{AdminForegroundColor}'") +
-                    (AdminBackgroundColor is null ? "" : $" -ABg '{AdminBackgroundColor}'") +
+                    (Caps is null || Caps.Equals(DefaultCaps) ? "" : " -Cap \'" + Caps.ToPsMetadata() + "\'") +
+                    (string.IsNullOrEmpty(Separator) || Separator.Equals(DefaultSeparator, StringComparison.Ordinal) ? "" : $" -Separator \'{Separator}\'") +
+                    (DefaultForegroundColor is null ? "" : $" -Fg \'{DefaultForegroundColor}\'") +
+                    (DefaultBackgroundColor is null ? "" : $" -Bg \'{DefaultBackgroundColor}\'") +
+                    (ErrorForegroundColor is null ? "" : $" -EFg \'{ErrorForegroundColor}\'") +
+                    (ErrorBackgroundColor is null ? "" : $" -EBg \'{ErrorBackgroundColor}\'") +
+                    (AdminForegroundColor is null ? "" : $" -AFg \'{AdminForegroundColor}\'") +
+                    (AdminBackgroundColor is null ? "" : $" -ABg \'{AdminBackgroundColor}\'") +
                     contentString;
         }
 
