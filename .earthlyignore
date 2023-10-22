@@ -1,0 +1,5 @@
+# ignore output (because we put stuff there)
+/output/*
+# ignore binary output files and folders
+bin/
+obj/
