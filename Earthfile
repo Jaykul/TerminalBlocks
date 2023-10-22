@@ -33,7 +33,7 @@ build:
     RUN ["pwsh", "--command", "Invoke-Build", "-File", "Build.build.ps1"]
 
     # SAVE ARTIFACT [--keep-ts] [--keep-own] [--if-exists] [--force] <src> [<artifact-dest-path>] [AS LOCAL <local-path>]
-    SAVE ARTIFACT $OUTPUT_ROOT AS LOCAL ./output
+    SAVE ARTIFACT $OUTPUT_ROOT/TerminalBlocks AS LOCAL .
 # runtime:
 #     FROM mcr.microsoft.com/dotnet/aspnet:7.0
 #     WORKDIR /app
