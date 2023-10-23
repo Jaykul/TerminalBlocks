@@ -80,6 +80,14 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        ## 2.0.0
+
+        - New blocks: HostName, UserName, Version, ExONamespace, CondaContext, LocationStack, JobOutput
+        - New features in blocks: Date (UTC), KubeContext (Namespace),
+        - Throw out the idea of using right-aligned blocks.
+        - Improve serialization to make this work better with PowerLine and EzTheme
+        - Better Prompt Examples
+
         ## 1.2.0
 
         Add support for separate cap backgrounds, so you can match the blocks on both ends of "bar" when bar has caps on both sides: <foo<bar>baz>. Requires calling .ToString(true, leftBackground, rightBackground)

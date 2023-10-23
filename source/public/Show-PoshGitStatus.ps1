@@ -7,6 +7,7 @@ function Show-PoshGitStatus {
 
             Configure via $global:GitPromptSettings
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidGlobalVars', '', Justification = "posh-git made this mess")]
     [OutputType([string])]
     [CmdletBinding()]
     param()

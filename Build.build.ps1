@@ -36,8 +36,14 @@ param(
 )
 $InformationPreference = "Continue"
 
-$Tasks = "Tasks", "../Tasks", "../../Tasks" | Convert-Path -ErrorAction Ignore | Select-Object -First 1
+# The name of the module to publis
+$script:PSModuleName = "TerminalBlocks"
 
+# The DotNetPublishRoot is the "publish" folder within the OutputRoot (used for dotnet publish output)
+$script:DotNetPublishRoot ??= Join-Path $script:BuildRoot lib
+
+$Tasks = "Tasks", "../Tasks", "../../Tasks" | Convert-Path -ErrorAction Ignore | Select-Object -First 1
+Write-Information "$($PSStyle.Foreground.BrightCyan)Found shared tasks in $Tasks" -Tag "InvokeBuild"
 ## Self-contained build script - can be invoked directly or via Invoke-Build
 if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1') {
     & "$Tasks/_Bootstrap.ps1"
@@ -52,19 +58,11 @@ if ($MyInvocation.ScriptName -notlike '*Invoke-Build.ps1') {
 }
 
 ## The first task defined is the default task. Put the right values for your project type here...
-if ($dotnetProjects) {
-    if ($Clean) {
-        Add-BuildTask CleanBuild Clean, GitVersion, DotNetRestore, DotNetBuild, DotNetTest, DotNetPublish
-    } else {
-        Add-BuildTask Build GitVersion, DotNetRestore, DotNetBuild, DotNetTest, DotNetPublish
-    }
-} else {
-    if ($Clean) {
-        Add-BuildTask CleanBuild Clean, GitVersion, PSModuleRestore, PSModuleBuild, PSModuleTest, PSModulePublish
-    } else {
-        Add-BuildTask Build GitVersion, PSModuleRestore, PSModuleBuild, PSModuleTest, PSModulePublish
-    }
+if ($dotnetProjects -and $Clean) {
+    Add-BuildTask CleanBuild Clean, ($Task ?? "Test")
+} elseif ($Clean) {
+    Add-BuildTask CleanBuild Clean, ($Task ?? "Test")
 }
 
 ## Initialize the build variables, and import shared tasks, including DotNet tasks
-. "$Tasks/_Initialize.ps1" -PowerShell
+. "$Tasks/_Initialize.ps1"
