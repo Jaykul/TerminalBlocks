@@ -30,30 +30,20 @@ if (-not $Semver -and (Get-Command gitversion -ErrorAction Ignore)) {
 }
 
 try {
-    $null = $PSBoundParameters.Remove("Configuration")
-    $null = $PSBoundParameters.Remove("SkipBinaryBuild")
-    $Module = Build-Module @PSBoundParameters -Passthru
-
-    # Need to build the binary before we try to import the module
-    $Folder = Split-Path $Module.Path
     if (!$SkipBinaryBuild) {
         Write-Host "## Compiling binary module" -ForegroundColor Cyan
-
         # dotnet restore
-        dotnet publish -c $Configuration -o "$($Folder)\lib" | Write-Host -ForegroundColor DarkGray
+        dotnet publish -c $Configuration -o "$PSScriptRoot/lib" | Write-Host -ForegroundColor DarkGray
         # We can't ship the Management DLLs because they're in PowerShell
         Get-ChildItem $Folder -Filter System.Management.* -Recurse | Remove-Item
     }
+
+    $null = $PSBoundParameters.Remove("Configuration")
+    $null = $PSBoundParameters.Remove("SkipBinaryBuild")
+    $Module = Build-Module @PSBoundParameters -Passthru
+    $Folder = Split-Path $Module.Path
     $Folder
-    $FilePath = Join-Path $Module.ModuleBase $Module.RootModule
 
-    . .\source\Generators\ModuleBuilderExtensions.ps1
-
-    # NewTerminalBlock has the common TerminalBlock parameters and implementation
-    Merge-Aspect AddParameter "Show-*", "New-TerminalBlock" .\source\Generators\NewTerminalBlock.ps1
-    Merge-Aspect MergeBlocks "Show-*", "New-TerminalBlock" .\source\Generators\NewTerminalBlock.ps1
-    # TracingAndErrorHandling has a simple Write-Information wrapper
-    Merge-Aspect MergeBlocks "*" .\source\Generators\TracingAndErrorHandling.ps1
 } finally {
     Pop-Location -StackName BuildModuleScript
 }

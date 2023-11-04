@@ -38,7 +38,7 @@
               <TableColumnItem>
                 <ScriptBlock>
                     if ($_.Content -is [ScriptBlock]) {
-                      $_.ToPSScript() + "$([char]27)[0m"
+                      $_.ToPSMetadata() + "$([char]27)[0m"
                     } else {
                       [System.Management.Automation.LanguagePrimitives]::ConvertTo($_.Content, [string]).Trim() + "$([char]27)[0m"
                     }

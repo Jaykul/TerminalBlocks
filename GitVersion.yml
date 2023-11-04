@@ -1,5 +1,25 @@
-mode: mainline
+mode: Mainline
 major-version-bump-message: 'semver:\s?(breaking|major)'
 minor-version-bump-message: 'semver:\s?(feature|minor)'
 patch-version-bump-message: 'semver:\s?(fix|patch)'
 no-bump-message: 'semver:\s?(none|skip)'
+
+assembly-versioning-format: '{Major}.{Minor}.{Patch}'
+assembly-informational-format: '{NuGetVersionV2}+Date.{CommitDate}.Branch.{BranchName}.Sha.{ShortSha}'
+branches:
+  main:
+    increment: Minor
+  pull-request:
+    tag: rc
+    increment: Inherit
+  hotfix:
+    regex: ^[Ff]ix
+    increment: Patch
+    source-branches:
+    - main
+  feature:
+    increment: Minor
+    regex: .*?/
+    source-branches:
+    - main
+    - feature

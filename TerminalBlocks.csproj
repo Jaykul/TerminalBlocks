@@ -24,11 +24,11 @@
     <None Remove="0*\**;1*\**;2*\**;3*\**;4*\**;5*\**;6*\**;7*\**;8*\**;9*\**" />
   </ItemGroup>
   <ItemGroup>
-    <!-- We are only referencing this for the sake of compiling, never ship it -->
+    <!-- We are only referencing these for compiling, at runtime, they're part of PowerShell -->
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" PrivateAssets="All" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Pansies\Pansies.csproj" PrivateAssets="All" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" PrivateAssets="All" />
+    <!-- TerminalBlocks "Requires" Pansies, so I don't ship this either -->
+    <PackageReference Include="PoshCode.Pansies" Version="[2.11.0,3.0)" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
     <None Update="LICENSE">

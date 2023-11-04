@@ -10,7 +10,7 @@
                 "isDefault": true
             },
             "type": "shell",
-            "command": "${workspaceFolder}\\build.ps1",
+            "command": "Invoke-Build",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
@@ -33,11 +33,9 @@
                     "PSModulePath": "${workspaceFolder}\\Output;${env:PSModulePath}"
                 }
             },
-            "command": "Invoke-Gherkin",
+            "command": "Invoke-Build",
             "args": [
-                "${workspaceFolder}\\Specs",
-                "-PesterOption", "@{ IncludeVSCodeMarker = $True }",
-                "-CodeCoverage", "${workspaceFolder}\\Output\\*.psm1"
+                "Test"
             ],
             "presentation": {
                 "echo": true,
