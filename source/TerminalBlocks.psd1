@@ -43,7 +43,7 @@ RequiredModules = @(
     # Make sure we get the fixed version of Metadata
     @{ModuleName="Metadata";      ModuleVersion="1.5.7"}
     @{ModuleName="Configuration"; ModuleVersion="1.5.1"}
-    @{ModuleName="Pansies";       ModuleVersion="2.6.0"}
+    @{ModuleName="Pansies";       ModuleVersion="2.9.0"}
 )
 RequiredAssemblies = "lib\TerminalBlocks.dll"
 
