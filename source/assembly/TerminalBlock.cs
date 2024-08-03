@@ -44,8 +44,8 @@ namespace PoshCode
         [ThreadStatic] private static SessionState __globalSessionState;
 
         // TODO: Document Static Properties:
-        public static int LastExitCode { get => (int)__globalSessionState.PSVariable.GetValue("LastExitCode"); }
-        public static bool LastSuccess { get => (bool)__globalSessionState.PSVariable.GetValue("?"); }
+        public static int LastExitCode { get; } = (int)__globalSessionState.PSVariable.GetValue("LastExitCode");
+        public static bool LastSuccess { get; } = (bool)__globalSessionState.PSVariable.GetValue("?");
         public static BlockCaps DefaultCaps { get => __caps; set => __caps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
         public static SessionState GlobalSessionState { get => __globalSessionState; set => __globalSessionState = value; }
