@@ -2,13 +2,13 @@
 # command when building the module (see `Get-Help Build-Module -Full` for details).
 @{
     ModuleManifest           = "./source/TerminalBlocks.psd1"
-    OutputDirectory          = ".."
+    OutputDirectory          = "../Modules"
     VersionedOutputDirectory = $true
     CopyDirectories          = @('examples','TerminalBlocks.format.ps1xml', 'SessionState.ps1')
     Postfix                  = "Footer.ps1"
-    Aspects                  = @(
-        @{ Function = "Show-*", "New-TerminalBlock"; Action = "AddParameter"; Source = "NewTerminalBlock" }
-        @{ Function = "Show-*", "New-TerminalBlock"; Action = "MergeBlocks"; Source = "NewTerminalBlock" }
-        @{ Function = "*"; Action = "MergeBlocks"; Source = "TracingAndErrorHandling" }
+    Generators                  = @(
+        @{ Generator = "Add-Parameter";     Boilerplate = "NewTerminalBlock.ps1"; Function = "Show-*", "New-TerminalBlock" }
+        @{ Generator = "Merge-ScriptBlock"; Boilerplate = "NewTerminalBlock.ps1"; Function = "Show-*", "New-TerminalBlock" }
+        @{ Generator = "Merge-ScriptBlock"; Boilerplate = "TracingAndErrorHandling.ps1"; Function = "*" }
     )
 }
