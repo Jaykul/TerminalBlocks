@@ -6,7 +6,7 @@ When you convert a TerminalBlock to string, it invokes the script and applies fo
 
 Right now, I am focusing on prompts, and I have written a handful of functions that output terminal blocks for prompts. The generic one is `New-TerminalBlock` which literally just takes a ScriptBlock and all the properties of a TerminalBlock and combines them. The rest actually involve some code-generation...
 
-**Important:** if you're using TerminalBlocks in your prompt, you should use the Initialize-Prompt and Exit-Prompt functions, or set the two "Last" properties at the top of your prompt, and restore them at the end, like this:
+**Important:** Remember that if you call any _native application_ in your prompt function, it will (re)set the `$LastExitCode`, so if you want to preserve the LastExitCode that was present before the prompt ran, you need to capture it and reset it at the end of your prompt. If you're using TerminalBlocks in your prompt, and as long as the static initializer runs before the prompt, you can just run `Reset-LastExitCode` at the end of your prompt. TerminalBlock captures `[PoshCode.TerminalBlock]::LastExitCod = $LastExitCode` when it's initialized.
 
 ```PowerShell
     # Initialize-Prompt

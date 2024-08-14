@@ -37,15 +37,16 @@ namespace PoshCode
         // ESC O S
 
         private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
-        //[ThreadStatic] private static int? __lastExitCode;
-        //[ThreadStatic] private static bool? __lastSuccess;
+        [ThreadStatic] private static int __lastExitCode;
+        [ThreadStatic] private static bool __lastSuccess;
         [ThreadStatic] private static string __separator;
+        [ThreadStatic] private static long __historyId;
         [ThreadStatic] private static BlockCaps __caps;
         [ThreadStatic] private static SessionState __globalSessionState;
 
         // TODO: Document Static Properties:
-        public static int LastExitCode { get; } = (int)__globalSessionState.PSVariable.GetValue("LastExitCode");
-        public static bool LastSuccess { get; } = (bool)__globalSessionState.PSVariable.GetValue("?");
+        public static int LastExitCode { get { UpdateSuccess(); return __lastExitCode; } }
+        public static bool LastSuccess { get { UpdateSuccess(); return __lastSuccess; } }
         public static BlockCaps DefaultCaps { get => __caps; set => __caps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
         public static SessionState GlobalSessionState { get => __globalSessionState; set => __globalSessionState = value; }
@@ -68,6 +69,16 @@ namespace PoshCode
                     Elevated = 0 == NativeMethods.getuid();
                 }
                 catch { }
+            }
+        }
+
+        private static void UpdateSuccess() {
+            long hid = (__globalSessionState.PSVariable.GetValue("MyInvocation") as System.Management.Automation.InvocationInfo)?.HistoryId ?? 0;
+            if (hid > __historyId)
+            {
+                __historyId = hid;
+                __lastExitCode = __globalSessionState.PSVariable.GetValue("LASTEXITCODE") as int? ?? 0;
+                __lastSuccess = __globalSessionState.PSVariable.GetValue("?") as bool? ?? true;
             }
         }
 
