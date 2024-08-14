@@ -18,7 +18,7 @@ function New-TerminalBlock {
     param(
         # The text, object, or scriptblock to show as output
         [AllowNull()][EmptyStringAsNull()]
-        [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Content")] # , Mandatory=$true
+        [Parameter(Position = 0, ParameterSetName = "Content")] # , Mandatory=$true
         [Alias("InputObject")]
         $Content,
 
@@ -38,7 +38,7 @@ function New-TerminalBlock {
         [Parameter(Mandatory, ParameterSetName = "RecallPosition")]
         [switch]$RecallPosition
     )
-    process {
+    end {
         switch($PSCmdlet.ParameterSetName) {
             Newline {
                 $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::NewLine
