@@ -1,4 +1,4 @@
-VERSION 0.7
+VERSION 0.8
 IMPORT github.com/poshcode/tasks
 FROM mcr.microsoft.com/dotnet/sdk:8.0
 WORKDIR /work

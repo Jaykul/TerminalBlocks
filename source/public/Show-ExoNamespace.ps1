@@ -5,8 +5,8 @@ function Show-ExoNamespace {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output. Defaults to "&nf-mdi-ship_wheel; "
-        [string]$Prefix = "&nf-mdi-ship_wheel; "
+        # A string to show before the output. Defaults to "&nf-md-microsoft_office; "
+        [string]$Prefix = "&nf-md-microsoft_office; "
     )
     if (Get-Command Get-FederatedOrganizationIdentifier -ErrorAction Ignore) {
         (Get-FederatedOrganizationIdentifier).AccountNamespace

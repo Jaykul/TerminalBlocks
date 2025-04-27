@@ -69,6 +69,8 @@ namespace PoshCode
             }
         }
 
+        private static readonly char[] separator = new char[] { '\u200D' };
+
         public string ToPsMetadata()
         {
             return Left + "\u200D" + Right;
@@ -78,7 +80,7 @@ namespace PoshCode
         {
             metadata = !String.IsNullOrEmpty(metadata) ? PoshCode.Pansies.Entities.Decode(metadata) : string.Empty;
 
-            var caps = metadata.Split( new char[] { '\u200D' }, 2);
+            var caps = metadata.Split(separator, 2);
             if (caps.Length > 1)
             {
                 Left = caps[0];

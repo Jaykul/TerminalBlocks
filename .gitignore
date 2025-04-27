@@ -12,3 +12,5 @@
 # ignore visual studio artifacts
 *.suo
 /.vs/
+.tmp-earthly-out/
+*.generated.*

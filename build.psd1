@@ -8,7 +8,7 @@
     Postfix                  = "Footer.ps1"
     Generators                  = @(
         @{ Generator = "Add-Parameter";     Boilerplate = "NewTerminalBlock.ps1"; Function = "Show-*", "New-TerminalBlock" }
-        @{ Generator = "Merge-ScriptBlock"; Boilerplate = "NewTerminalBlock.ps1"; Function = "Show-*", "New-TerminalBlock" }
+        @{ Generator = "Merge-ScriptBlock"; Boilerplate = "NewTerminalBlock.ps1"; Function = "Show-*" }
         @{ Generator = "Merge-ScriptBlock"; Boilerplate = "TracingAndErrorHandling.ps1"; Function = "*" }
     )
 }

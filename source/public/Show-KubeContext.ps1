@@ -5,8 +5,8 @@ function Show-KubeContext {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output. Defaults to "&nf-mdi-ship_wheel; "
-        [string]$Prefix = "&nf-mdi-ship_wheel; ",
+        # A string to show before the output. Defaults to "&nf-md-ship_wheel; "
+        [string]$Prefix = "&nf-md-ship_wheel; ",
 
         # Show more information about the context, like the default namespace.
         # If set, the output will be based on the GoTemplate and will use "kubectl config view --minify" instead of "kubectl config current-context"

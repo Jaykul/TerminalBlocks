@@ -37,12 +37,19 @@ namespace PoshCode
         // ESC O S
 
         private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
+
+        // I'm using ThreadStatic to get as close as I can to a PowerShell session value for these state & preference variables
         [ThreadStatic] private static int __lastExitCode;
         [ThreadStatic] private static bool __lastSuccess;
         [ThreadStatic] private static string __separator;
         [ThreadStatic] private static long __historyId;
         [ThreadStatic] private static BlockCaps __caps;
         [ThreadStatic] private static SessionState __globalSessionState;
+        [ThreadStatic] private static int __automaticBackgroundHueStep;
+        [ThreadStatic] private static RgbColor __firstAutomaticBackgroundColor;
+        [ThreadStatic] private static RgbColor __automaticBackgroundColor;
+        [ThreadStatic] private static long __automaticBackgroundColorsHistoryId;
+
 
         // TODO: Document Static Properties:
         public static int LastExitCode { get { UpdateSuccess(); return __lastExitCode; } }
@@ -50,6 +57,8 @@ namespace PoshCode
         public static BlockCaps DefaultCaps { get => __caps; set => __caps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
         public static SessionState GlobalSessionState { get => __globalSessionState; set => __globalSessionState = value; }
+        public static RgbColor FirstAutomaticBackgroundColor { get => __firstAutomaticBackgroundColor; set => __firstAutomaticBackgroundColor = value; }
+        public static int AutomaticBackgroundHueStep { get => __automaticBackgroundHueStep; set => __automaticBackgroundHueStep = value; }
 
         public static bool Elevated { get; }
         static TerminalBlock()
@@ -57,6 +66,7 @@ namespace PoshCode
             // By default, no caps
             DefaultCaps = new BlockCaps("", "");
             DefaultSeparator = " ";
+            AutomaticBackgroundHueStep = 5;
             try
             {
                 // Elevated = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
@@ -83,7 +93,7 @@ namespace PoshCode
         }
 
         // TODO: Document Public Properties:
-
+        public int MaxLength { get; set; }
         public BlockCaps Caps { get; set; } = DefaultCaps;
         public String MyInvocation { get; set; }
         public String Separator { get; set; } = DefaultSeparator;
@@ -364,6 +374,10 @@ namespace PoshCode
                 {
                     Caps = LanguagePrimitives.ConvertTo<BlockCaps>(values[key]);
                 }
+                else if (Regex.IsMatch("MaxLength", pattern, RegexOptions.IgnoreCase))
+                {
+                    MaxLength = LanguagePrimitives.ConvertTo<int>(values[key]);
+                }
                 else if (Regex.IsMatch("MyInvocation", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch(key, "persist|entities", RegexOptions.IgnoreCase))
                 {
                     // I once had these properties, but I don't anymore
@@ -424,7 +438,6 @@ namespace PoshCode
             }
         }
         public int CacheLength { get; private set; }
-
         private object _cacheKey;
         private object _cache;
         private RgbColor _defaultBackgroundColor;
@@ -545,6 +558,25 @@ namespace PoshCode
             var background = BackgroundColor;
             var foreground = ForegroundColor;
 
+            if (null == background && __firstAutomaticBackgroundColor != null)
+            {
+                if (__automaticBackgroundColorsHistoryId != __historyId)
+                {
+                    // Reset the color if the history ID changed
+                    __automaticBackgroundColor = __firstAutomaticBackgroundColor;
+                    __automaticBackgroundColorsHistoryId = __historyId;
+                }
+
+                background = __automaticBackgroundColor;
+                __automaticBackgroundColor = Gradient.GetRainbow(__automaticBackgroundColor, 1, hueStep: AutomaticBackgroundHueStep, lightStep: 0).First();
+
+                // If we changed the background and the foreground isn't explicitly set, change it for readability
+                if (null == foreground)
+                {
+                    foreground = background.GetComplement(false, true);
+                }
+            }
+
             if (content is SpecialBlock space)
             {
                 switch (space)
@@ -587,7 +619,20 @@ namespace PoshCode
 
             background?.AppendTo(output, true);
             foreground?.AppendTo(output, false);
-            output.Append((string)content);
+
+            var strContent = (string)content;
+            if (MaxLength > 0)
+            {
+                var maxContentLength = MaxLength - Caps.Length;
+                var contentInfo = new StringInfo((string)content);
+                if (contentInfo.LengthInTextElements > maxContentLength)
+                {
+                    // If the content is too long, truncate it
+                    strContent = contentInfo.SubstringByTextElements(0, maxContentLength);
+                }
+            }
+
+            output.Append(strContent);
 
             if (!string.IsNullOrEmpty(Caps?.Right))
             {
@@ -637,10 +682,12 @@ namespace PoshCode
                     (ErrorBackgroundColor is null ? "" : $" -EBg \'{ErrorBackgroundColor}\'") +
                     (AdminForegroundColor is null ? "" : $" -AFg \'{AdminForegroundColor}\'") +
                     (AdminBackgroundColor is null ? "" : $" -ABg \'{AdminBackgroundColor}\'") +
+                    (MaxLength <= 0 ? "" : $" -MaxLength {MaxLength}") +
                     contentString;
         }
 
-        private string ContentToPsScript(object content) {
+        private static string ContentToPsScript(object content)
+        {
             switch (content)
             {
                 case null:
@@ -706,6 +753,7 @@ namespace PoshCode
                 Separator = data.Separator;
                 Prefix = data.Prefix;
                 Postfix = data.Postfix;
+                MaxLength = data.MaxLength;
 
                 if (null != data.AdminBackgroundColor)
                 {

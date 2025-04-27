@@ -1,29 +1,36 @@
 function Show-Version {
     <#
         .SYNOPSIS
-            Gets Version information about the current host, PowerShell, and OS
+            Gets Version information about PowerShell and more
         .DESCRIPTION
-            Calls [Environment]::UserName
+            This function lets you get the various "version" information in a single output.
+
+            By default, it only shows the "Shell" version, which is just $PSVersionTable.PSVersion
         .EXAMPLE
-            Show-Version OSName, OSVersion, PSVersion -Label -Separator '' -BackgroundColor White -ForegroundColor Black
+            Show-Version System, Shell -Label -Separator '' -BackgroundColor White -ForegroundColor Black
             | % ToString
     #>
-    [OutputType([string])]
+    [OutputType([string], [array])]
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param(
-        # The version to show (default: PSVersion)
-        [ValidateSet("OSName", "OSVersion", "Kernel", "NET", "PSVersion", "Host", "All")]
-        [string[]]$Component,
+        # The version to show.
+        # The "OS" version is *just* the OS name
+        # The "System" version includes the OS Name and Release (and sometimes more)
+        # The old "OSVersion" is now "Release" which is also known as the "productVersion" and is part of the "System" version.
+        # By default returns the System, Kernel, .NET, and PowerShell versions.
+        [ValidateSet("OS", "System", "Release", "Build", "Kernel", ".NET", "PowerShell", "Host")]
+        [string[]]$Component = ("System", "Kernel", ".NET", "PowerShell"),
 
-        # Whether to include the label for each component (defaults to $true if $Component is "All")
+        # Whether to include the label for each component (defaults to $true when no $Component is specified, otherwise $false)
         [switch]$Label
     )
     end {
-        if ($Component -eq "All") {
+        if ($PSBoundParameters.Count -eq 0) {
             $Label = $true
-            $Component = "OSName", "OSVersion", "Kernel", "NET", "PSVersion", "Host"
         }
-
+        if (!$script:OperatingSystem) {
+            $script:OperatingSystem = &(Get-Module TerminalBlocks) { GetOperatingSystem }
+        }
         @(
             foreach ($Component in $Component) {
                 @(
@@ -34,41 +41,30 @@ function Show-Version {
                         "Host" {
                             $Host.Version.ToString()
                         }
-                        "PSVersion" {
+                        "PowerShell" {
                             $PSVersionTable.PSVersion.ToString()
                         }
-                        "Kernel" {
-                            [Environment]::OSVersion.Version.ToString()
-                        }
-                        "NET" {
+                        ".NET" {
                             [Environment]::Version.ToString()
                         }
-                        # We may need some help here, because I'm not sure this is enough _everywhere_
-                        "OSName" {
-                            if (Test-Path /etc/*-release) {
-                                $Data = @{}
-                                Get-Content /etc/*-release | ConvertFrom-StringData | ForEach-Object { $Data += $_ }
-                                @($Data["DISTRIB_ID", "Name", "Id"].Trim(" `t`r`n`"'"))[0]
-                            } elseif (Get-Command Get-CimInstance -ErrorAction Ignore) {
-                                (Get-CimInstance Win32_OperatingSystem -Property Caption).Caption
-                            } elseif ($IsMacOS) {
-                                "MacOS"
-                            }
+                        "Kernel" {
+                            $script:OperatingSystem.KernelVersion
                         }
-                        "OSVersion" {
-                            if (Test-Path /etc/*-release) {
-                                $Data = @{}
-                                Get-Content /etc/*-release | ConvertFrom-StringData | ForEach-Object { $Data += $_ }
-                                @($Data["VERSION_ID", "DISTRIB_RELEASE", "VERSION", "PRETTY_NAME"].Trim(" `t`r`n`"'"))[0]
-                            } elseif (Get-Command Get-CimInstance -ErrorAction Ignore) {
-                                (Get-CimInstance Win32_OperatingSystem -Property BuildNumber).BuildNumber
-                            } elseif ($IsMacOS) {
-                                sw_vers -productVersion
-                            }
+                        "OS" {
+                            $script:OperatingSystem.Name
+                        }
+                        "System" {
+                            $script:OperatingSystem.System
+                        }
+                        "Release" {
+                            $script:OperatingSystem.Release
+                        }
+                        "Build" {
+                            $script:OperatingSystem.BuildNumber
                         }
                     }
                 ) -join " "
             }
-        ) -join $Separator
+        )
     }
 }

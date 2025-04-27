@@ -1,7 +1,14 @@
 param(
+    # The maximum length of the block, in cells (unicode characters)
+    # Any text longer than this will be truncated to fit
+    # If this is set to 0, the block will be as wide as the content
+    [int]$MaxLength,
+
+    # Extra text to prepend at the start of the block
     [Alias("Prepend")]
     [String]$Prefix,
 
+    # Extra text to append at the end of the block
     [Alias("Suffix", "Append")]
     [String]$Postfix,
 

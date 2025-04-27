@@ -6,10 +6,10 @@ function Show-JobOutput {
             Calls Get-Job and returns the last output
     #>
     [OutputType([string])]
-    [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
+    [CmdletBinding()]
     param(
         # The name of the job to show the output of
-        $Name
+        [string]$Name
     )
     $Job = Get-Job -Name $Name -ErrorAction SilentlyContinue
     if ($Job.Output.Count) {
