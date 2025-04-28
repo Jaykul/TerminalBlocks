@@ -57,7 +57,16 @@ namespace PoshCode
         public static BlockCaps DefaultCaps { get => __caps; set => __caps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
         public static SessionState GlobalSessionState { get => __globalSessionState; set => __globalSessionState = value; }
-        public static RgbColor FirstAutomaticBackgroundColor { get => __firstAutomaticBackgroundColor; set => __firstAutomaticBackgroundColor = value; }
+        public static RgbColor FirstAutomaticBackgroundColor {
+            get => __firstAutomaticBackgroundColor;
+            set {
+                __firstAutomaticBackgroundColor = value;
+                // Whenever they reset the first one, also reset the current one, so it takes effect immediately
+                __automaticBackgroundColor = __firstAutomaticBackgroundColor;
+                __automaticBackgroundColorsHistoryId = __historyId;
+            }
+        }
+
         public static int AutomaticBackgroundHueStep { get => __automaticBackgroundHueStep; set => __automaticBackgroundHueStep = value; }
 
         public static bool Elevated { get; }
@@ -560,13 +569,14 @@ namespace PoshCode
 
             if (null == background && __firstAutomaticBackgroundColor != null)
             {
+                // Reset the color if the history ID changed
                 if (__automaticBackgroundColorsHistoryId != __historyId)
                 {
-                    // Reset the color if the history ID changed
                     __automaticBackgroundColor = __firstAutomaticBackgroundColor;
                     __automaticBackgroundColorsHistoryId = __historyId;
                 }
 
+                // Use the color, and then pick a new one for next time
                 background = __automaticBackgroundColor;
                 __automaticBackgroundColor = Gradient.GetRainbow(__automaticBackgroundColor, 1, hueStep: AutomaticBackgroundHueStep, lightStep: 0).First();
 
