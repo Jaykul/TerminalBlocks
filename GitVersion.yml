@@ -1,25 +1,46 @@
-mode: Mainline
+mode: mainline #  Each merged branch against main will increment the patch version unless otherwise specified in a commit message
+commit-date-format: "yyyyMMddTHHmmss"
+assembly-file-versioning-format: "{Major}.{Minor}.{Patch}.{env:GITHUB_RUN_NUMBER ?? 0}"
+
+# This repo needs to use NuGetVersionV2 for compatibility with PowerShellGallery
+assembly-informational-format: "{NuGetVersionV2}+Build.{env:GITHUB_RUN_NUMBER ?? local}.Sha.{Sha}.Date.{CommitDate}"
 major-version-bump-message: 'semver:\s?(breaking|major)'
 minor-version-bump-message: 'semver:\s?(feature|minor)'
 patch-version-bump-message: 'semver:\s?(fix|patch)'
 no-bump-message: 'semver:\s?(none|skip)'
+commit-message-incrementing: Enabled
 
-assembly-versioning-format: '{Major}.{Minor}.{Patch}'
-assembly-informational-format: '{NuGetVersionV2}+Date.{CommitDate}.Branch.{BranchName}.Sha.{ShortSha}'
 branches:
   main:
+    tag: "" # explicitly no tag for main builds
+    regex: ^master$|^main$
     increment: Minor
-  pull-request:
-    tag: rc
-    increment: Inherit
+    is-mainline: true
+    tracks-release-branches: true
   hotfix:
-    regex: ^[Ff]ix
+    tag: rc
+    regex: hotfix(es)?/\d+\.\d+\.\d+
+    increment: None
+    is-release-branch: true
+    prevent-increment-of-merged-branch-version: true
+    source-branches: [ "main" ]
+  release:
+    tag: rc
+    regex: releases?/\d+\.\d+\.\d+
+    increment: None
+    is-release-branch: true
+    prevent-increment-of-merged-branch-version: true
+    source-branches: [ "main" ]
+  pull-request:
+    regex: pull/
+    tag: pr
+    tag-number-pattern: '[/-](?<number>\d+)'
     increment: Patch
-    source-branches:
-    - main
+    source-branches: [ "main", "feature", "release", "hotfix" ]
   feature:
-    increment: Minor
-    regex: .*?/
-    source-branches:
-    - main
-    - feature
+    regex: .*/
+    tag: useBranchName
+    source-branches: [ "main", "feature" ]
+    track-merge-target: true
+    tracks-release-branches: true
+    increment: Patch

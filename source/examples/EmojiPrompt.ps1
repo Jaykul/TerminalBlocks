@@ -8,20 +8,20 @@ param(
 $Colors = Get-Gradient $StartColor $EndColor -steps 6
 
 # Clearn out the Caps, in case you used the powerline example
-[PoshCode.TerminalBlock]::DefaultCaps = '', ' '
+[PoshCode.TerminalBlocks.Block]::DefaultCaps = '', ' '
 
 # With terminal blocks, you generate blocks up front, and then just ToString them in your prompt function:
 $global:Prompt = @(
     Show-LastExitCode -Fg PaleVioletRed1
     Show-ElapsedTime -Autoformat -Fg Gray80 -Prefix "&hourglassdone;"
-    New-TerminalBlock -Newline
+    Show-Newline
 
     Show-Date -Format "h\:mm" -Fg Yellow2 -Prefix "&watch;"
     Show-LocationStack -Prefix "&filefolder;" -RepeatCharacter "&pushpin;"
     Show-NestedPromptLevel -RepeatCharacter "&Gear;" -Postfix " " -Fg Tan1
     Show-Path -Prefix "&openfilefolder;" -HomeString "&House;" -Separator '' -Fg $Colors[3] -Depth 2 -AsUrl
     Show-PoshGitStatus -Prefix "[" -Postfix "]"
-    New-TerminalBlock -Newline
+    Show-Newline
 
     Show-HistoryId -Fg DeepSkyBlue <# -Prefix "&nf-fa-hashtag;" #> -Postfix " PS>"
 )

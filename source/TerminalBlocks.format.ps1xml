@@ -1,9 +1,9 @@
 <Configuration>
   <ViewDefinitions>
     <View>
-      <Name>TerminalBlock</Name>
+      <Name>Block</Name>
       <ViewSelectedBy>
-        <TypeName>PoshCode.TerminalBlock</TypeName>
+        <TypeName>PoshCode.TerminalBlocks.Block</TypeName>
       </ViewSelectedBy>
       <TableControl>
         <TableHeaders>
@@ -36,12 +36,24 @@
               </TableColumnItem>
               <TableColumnItem>
                 <ScriptBlock>
+                  if ($null -eq $_.BackgroundColor) {
+                    "Automatic"
+                  } elseif ($_.BackgroundColor.TerminalColor -eq "Default") {
+                    "Default"
+                  } else {
                     $_.BackgroundColor.ToVtEscapeSequence($true) + " $([char]27)[0m " + $_.BackgroundColor.ToString()
+                  }
                 </ScriptBlock>
               </TableColumnItem>
               <TableColumnItem>
                 <ScriptBlock>
+                  if ($null -eq $_.ForegroundColor) {
+                    "Automatic"
+                  } elseif ($_.ForegroundColor.TerminalColor -eq "Default") {
+                    "Default"
+                  } else {
                     $_.ForegroundColor.ToVtEscapeSequence($true) + " $([char]27)[0m " + $_.ForegroundColor.ToString()
+                  }
                 </ScriptBlock>
               </TableColumnItem>
               <TableColumnItem>

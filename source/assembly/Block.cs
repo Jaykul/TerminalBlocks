@@ -8,10 +8,10 @@ using System.Management.Automation.Language;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
+using PoshCode;
 using PoshCode.Pansies;
 using System.Runtime.InteropServices;
-
-namespace PoshCode
+namespace PoshCode.TerminalBlocks
 {
     static class NativeMethods
     {
@@ -22,7 +22,7 @@ namespace PoshCode
         internal static extern uint geteuid();
     }
 
-    public class TerminalBlock : IPsMetadataSerializable
+    public class Block : IPsMetadataSerializable
     {
         // Borrowed this from https://github.com/chalk/ansi-regex
         // private Regex _escapeCode = new Regex("[\\u001b\\u009b][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))", RegexOptions.Compiled);
@@ -35,6 +35,8 @@ namespace PoshCode
         // ESC O Q
         // ESC O R
         // ESC O S
+        static private RgbColor _defaultColor = new RgbColor(-1, -1, -1);
+        static private RgbColor _automaticColor = new RgbColor(0, 0, -1);
 
         private Regex _escapeCode = new Regex("\\x1b[\\(\\)%\"&\\.\\/*+.-][@-Z]|\\x1b\\].*?(?:\\u001b\\u005c|\\u0007|^)|\\x1b\\[\\P{L}*[@-_A-Za-z^`\\{\\|\\}~]|\\x1b#\\d|\\x1b[!-~]", RegexOptions.Compiled);
 
@@ -43,18 +45,22 @@ namespace PoshCode
         [ThreadStatic] private static bool __lastSuccess;
         [ThreadStatic] private static string __separator;
         [ThreadStatic] private static long __historyId;
-        [ThreadStatic] private static BlockCaps __caps;
+        [ThreadStatic] private static Caps __caps;
         [ThreadStatic] private static SessionState __globalSessionState;
         [ThreadStatic] private static int __automaticBackgroundHueStep;
         [ThreadStatic] private static RgbColor __firstAutomaticBackgroundColor;
-        [ThreadStatic] private static RgbColor __automaticBackgroundColor;
+        [ThreadStatic] private static RgbColor __lastAutomaticBackgroundColor;
+        [ThreadStatic] private static RgbColor __nextAutomaticBackgroundColor;
         [ThreadStatic] private static long __automaticBackgroundColorsHistoryId;
 
 
         // TODO: Document Static Properties:
         public static int LastExitCode { get { UpdateSuccess(); return __lastExitCode; } }
         public static bool LastSuccess { get { UpdateSuccess(); return __lastSuccess; } }
-        public static BlockCaps DefaultCaps { get => __caps; set => __caps = value; }
+
+        public static RgbColor AutomaticColor { get => _automaticColor; }
+        public static RgbColor DefaultColor { get => _defaultColor; }
+        public static Caps DefaultCaps { get => __caps; set => __caps = value; }
         public static String DefaultSeparator { get => __separator; set => __separator = value; }
         public static SessionState GlobalSessionState { get => __globalSessionState; set => __globalSessionState = value; }
         public static RgbColor FirstAutomaticBackgroundColor {
@@ -62,7 +68,7 @@ namespace PoshCode
             set {
                 __firstAutomaticBackgroundColor = value;
                 // Whenever they reset the first one, also reset the current one, so it takes effect immediately
-                __automaticBackgroundColor = __firstAutomaticBackgroundColor;
+                __nextAutomaticBackgroundColor = __firstAutomaticBackgroundColor;
                 __automaticBackgroundColorsHistoryId = __historyId;
             }
         }
@@ -70,10 +76,10 @@ namespace PoshCode
         public static int AutomaticBackgroundHueStep { get => __automaticBackgroundHueStep; set => __automaticBackgroundHueStep = value; }
 
         public static bool Elevated { get; }
-        static TerminalBlock()
+        static Block()
         {
             // By default, no caps
-            DefaultCaps = new BlockCaps("", "");
+            DefaultCaps = new Caps("", "");
             DefaultSeparator = " ";
             AutomaticBackgroundHueStep = 5;
             try
@@ -103,7 +109,7 @@ namespace PoshCode
 
         // TODO: Document Public Properties:
         public int MaxLength { get; set; }
-        public BlockCaps Caps { get; set; } = DefaultCaps;
+        public Caps Caps { get; set; } = DefaultCaps;
         public String MyInvocation { get; set; }
         public String Separator { get; set; } = DefaultSeparator;
         public String Prefix { get; set; }
@@ -246,6 +252,11 @@ namespace PoshCode
         {
             get
             {
+                if (Content is SpecialBlock)
+                {
+                    return _defaultColor; // SpecialBlock don't have colors, so we return the default one
+                }
+
                 if (!LastSuccess && null != ErrorForegroundColor)
                 {
                     return ErrorForegroundColor;
@@ -268,6 +279,11 @@ namespace PoshCode
         {
             get
             {
+                if (Content is SpecialBlock)
+                {
+                    return _defaultColor; // SpecialBlock don't have colors, so we return the default one
+                }
+
                 if (!LastSuccess && null != ErrorBackgroundColor)
                 {
                     return ErrorBackgroundColor;
@@ -320,7 +336,7 @@ namespace PoshCode
         /// This constructor is here so we can allow partial matches to the property names.
         /// </summary>
         /// <param name="values"></param>
-        public TerminalBlock(IDictionary values)
+        public Block(IDictionary values)
         {
             // Caps = DefaultCaps;
             // Separator = DefaultSeparator;
@@ -381,7 +397,7 @@ namespace PoshCode
                 }
                 else if (Regex.IsMatch("caps", pattern, RegexOptions.IgnoreCase))
                 {
-                    Caps = LanguagePrimitives.ConvertTo<BlockCaps>(values[key]);
+                    Caps = LanguagePrimitives.ConvertTo<Caps>(values[key]);
                 }
                 else if (Regex.IsMatch("MaxLength", pattern, RegexOptions.IgnoreCase))
                 {
@@ -407,11 +423,11 @@ namespace PoshCode
         /// <summary>
         /// The default constructor is required for serialization
         /// </summary>
-        public TerminalBlock() { }
+        public Block() { }
         /// <summary>
         /// The root constructor takes content
         /// </summary>
-        public TerminalBlock(object content)
+        public Block(object content)
         {
             // Caps = DefaultCaps;
             // Separator = DefaultSeparator;
@@ -554,8 +570,9 @@ namespace PoshCode
         }
 
         public override string ToString() => ToString(null, null, null);
+        public string ToString(object cacheKey) => ToString(null, null, cacheKey);
 
-        // new overload requires two "other" background colors (one for each end cap).
+        // Actually rendering requires the previous and next background colors for rendering "powerline-style" caps
         public string ToString(RgbColor leftBackground, RgbColor rightBackground, object cacheKey = null)
         {
             var content = Invoke(cacheKey);
@@ -567,24 +584,15 @@ namespace PoshCode
             var background = BackgroundColor;
             var foreground = ForegroundColor;
 
-            if (null == background && __firstAutomaticBackgroundColor != null)
+            // If we're automatic background colors, we can leave the left and right backgrounds null because we calculate them in here!
+            // we lost the ability (and the need) to know (externally) the leftBackground and rightBackground colors.
+            if (leftBackground == _automaticColor && __lastAutomaticBackgroundColor != null)
             {
-                // Reset the color if the history ID changed
-                if (__automaticBackgroundColorsHistoryId != __historyId)
-                {
-                    __automaticBackgroundColor = __firstAutomaticBackgroundColor;
-                    __automaticBackgroundColorsHistoryId = __historyId;
-                }
-
-                // Use the color, and then pick a new one for next time
-                background = __automaticBackgroundColor;
-                __automaticBackgroundColor = Gradient.GetRainbow(__automaticBackgroundColor, 1, hueStep: AutomaticBackgroundHueStep, lightStep: 0).First();
-
-                // If we changed the background and the foreground isn't explicitly set, change it for readability
-                if (null == foreground)
-                {
-                    foreground = background.GetComplement(false, true);
-                }
+                leftBackground = __lastAutomaticBackgroundColor;
+            }
+            if (rightBackground == _automaticColor && __nextAutomaticBackgroundColor != null)
+            {
+                rightBackground = __nextAutomaticBackgroundColor;
             }
 
             if (content is SpecialBlock space)
@@ -613,6 +621,26 @@ namespace PoshCode
                         return "\u001b[u";
                     case SpecialBlock.NewLine:
                         return "\n";
+                }
+            }
+
+            if (null == background && __firstAutomaticBackgroundColor != null)
+            {
+                // Reset the color if the history ID changed
+                if (__automaticBackgroundColorsHistoryId != __historyId)
+                {
+                    __nextAutomaticBackgroundColor = __firstAutomaticBackgroundColor;
+                    __automaticBackgroundColorsHistoryId = __historyId;
+                }
+
+                // Use the color, and then pick a new one for next time
+                background = __lastAutomaticBackgroundColor = __nextAutomaticBackgroundColor;
+                __nextAutomaticBackgroundColor = Gradient.GetRainbow(background, 1, hueStep: AutomaticBackgroundHueStep, lightStep: 0).First();
+
+                // If we changed the background and the foreground isn't explicitly set, change it for readability
+                if (null == foreground)
+                {
+                    foreground = background.GetComplement(false, true);
                 }
             }
 
@@ -661,7 +689,7 @@ namespace PoshCode
             return Entities.Decode(output.ToString());
         }
 
-        public bool Equals(TerminalBlock other)
+        public bool Equals(Block other)
         {
             return other != null &&
                 (Content == other.Content &&
@@ -751,12 +779,12 @@ namespace PoshCode
         {
             var ps = PowerShell.Create(RunspaceMode.CurrentRunspace);
             var languageMode = ps.Runspace.SessionStateProxy.LanguageMode;
-            TerminalBlock data;
+            Block data;
             try
             {
                 ps.Runspace.SessionStateProxy.LanguageMode = PSLanguageMode.RestrictedLanguage;
                 ps.AddScript(metadata, true);
-                data = ps.Invoke<TerminalBlock>().FirstOrDefault();
+                data = ps.Invoke<Block>().FirstOrDefault();
 
                 Caps = data.Caps;
                 MyInvocation = data.MyInvocation;

@@ -1,4 +1,5 @@
-#requires -Module Sixel, TerminalBlocks
+
+#requires -Module Sixel, Pansies, TerminalBlocks
 [CmdletBinding()]
 param(
     [PoshCode.Pansies.RgbColor]$StartColor = "DarkOrange",
@@ -16,7 +17,8 @@ param(
     $Lines = 21
 )
 
-$Offset = [PoshCode.TerminalPosition]@{ Col = $Columns + 2 }
+$Offset = [PoshCode.Pansies.Position]@{ Column = $Columns + 2 }
+$CurrentDefaults = Get-TerminalBlockDefault
 Set-TerminalBlockDefault -BackgroundColor $StartColor -HueStep $HueStep -Caps "$Offset", "" -Separator "`n$Offset"
 
 $Padding = ' ' * 100
@@ -48,13 +50,15 @@ $Info = @(
     Show-Version PowerShell -Prefix "  PowerShell: " -Postfix $Padding -MaxLength 50
     Show-Weather -Prefix '  Weather: ' -Postfix $Padding -MaxLength 50
     ""
-    $Offset.Col += "      Palette: ".Length
+    $Offset.Column += "      Palette: ".Length
     Show-Palette -Prefix '      Palette: ' -Background Gray13 -Separator "`n$Offset"
 )
 
 
-
-"`e[s"
+# $Position = Get-CursorPosition
+# "Save" is supported by more terminals than QueryPosition
+# "`e[s"
+"`e7"
 if ($Info.Count -gt $LINES) {
     # THE Info is longer than the picture, let's center it by putting the picture down
     [int]$padding = ($Info.Count - $LINES) / 2
@@ -62,11 +66,17 @@ if ($Info.Count -gt $LINES) {
 
 }
 ConvertTo-Sixel $(
-    if (Test-Path $Image) { $Image }
-    elseif (Test-Path (Join-Path $Home $Image)) { Join-Path ~ $Image }
-    elseif (Test-Path (Join-Path $PSScriptRoot $Image)) { Join-Path $PSScriptRoot $Image }
+    if (Test-Path $Image) {
+        $Image
+    } elseif (Test-Path (Join-Path $Home $Image)) {
+        Join-Path ~ $Image
+    } elseif (Test-Path (Join-Path $PSScriptRoot $Image)) {
+        Join-Path $PSScriptRoot $Image
+    }
 )
-"`e[u"
+# Restore the saved cursor position
+# "`e[u"
+"`e8"
 
 if ($Info.Count -lt $LINES) {
     # THE Info is shorter than the picture, let's center it by starting lower
@@ -74,10 +84,12 @@ if ($Info.Count -lt $LINES) {
     "`e[${padding}E"
 }
 
-$Info | % ToString
+$Info | ForEach-Object ToString
 
 # move cursor back to the bottom and print 2 newlines
 if ($Info.Count -lt $LINES) {
     "`e[${padding}E"
 }
 "`e[?25h"
+
+$CurrentDefaults | Set-TerminalBlockDefault

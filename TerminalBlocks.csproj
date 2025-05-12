@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>PoshCode</RootNamespace>
-    <DebugType>embedded</DebugType>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <RootNamespace>PoshCode.TerminalBlocks</RootNamespace>
+    <DebugType>embedded</DebugType>
+    <!-- <PlatformTarget>AnyCPU</PlatformTarget> -->
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <LangVersion>13.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
@@ -27,8 +28,8 @@
     <!-- We are only referencing these for compiling, at runtime, they're part of PowerShell -->
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" PrivateAssets="All" />
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" PrivateAssets="All" />
-    <!-- TerminalBlocks "Requires" Pansies, so I don't ship this either -->
-    <PackageReference Include="PoshCode.Pansies" Version="[2.9.0,3.0)" PrivateAssets="All" />
+    <!-- TerminalBlocks "Requires" Pansies, so I don't need to ship this either -->
+    <PackageReference Include="PoshCode.Pansies" Version="3.0.0-EntityUpdates.17" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
     <None Update="LICENSE">

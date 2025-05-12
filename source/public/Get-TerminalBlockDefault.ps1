@@ -3,9 +3,10 @@ function Get-TerminalBlockDefault {
     [CmdletBinding()]
     param()
     [PSCustomObject]@{
-        FirstAutomaticBackgroundColor = [PoshCode.TerminalBlock]::FirstAutomaticBackgroundColor
-        AutomaticBackgroundHueStep = [PoshCode.TerminalBlock]::AutomaticBackgroundHueStep
-        DefaultCaps = [PoshCode.TerminalBlock]::DefaultCaps
-        DefaultSeparator = [PoshCode.TerminalBlock]::DefaultSeparator
+        PSTypeName                    = "PoshCode.TerminalBlocks.Defaults"
+        FirstAutomaticBackgroundColor = [PoshCode.TerminalBlocks.Block]::FirstAutomaticBackgroundColor
+        AutomaticBackgroundHueStep = [PoshCode.TerminalBlocks.Block]::AutomaticBackgroundHueStep
+        DefaultCaps = [PoshCode.TerminalBlocks.Block]::DefaultCaps
+        DefaultSeparator = [PoshCode.TerminalBlocks.Block]::DefaultSeparator
     }
 }

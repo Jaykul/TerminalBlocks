@@ -5,5 +5,5 @@ function Test-Success {
     #>
     [CmdletBinding()]
     param()
-    [PoshCode.TerminalBlock]::LastSuccess
+    [PoshCode.TerminalBlocks.Block]::LastSuccess
 }

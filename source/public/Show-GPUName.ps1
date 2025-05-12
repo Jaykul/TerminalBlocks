@@ -10,8 +10,8 @@ function Show-GPUName {
     param()
 
     if ($PSVersion.Major -lt 6 -or $IsWindows) {
-        # Limit it to only those that are "Running" (i.e. Availability = 3)
-        (Get-CimInstance -ClassName Win32_VideoController -Property Name -Filter "Availability = 3").Name
+        # Limit it to only those that have a known Refresh Rate?
+        (Get-CimInstance -ClassName Win32_VideoController -Property Name -Filter "MinRefreshRate > 0").Name
     } elseif ($IsOSX) {
         # TODO
     } elseif ($IsLinux) {

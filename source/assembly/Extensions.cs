@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using PoshCode.Pansies;
 
-namespace PoshCode
+namespace PoshCode.TerminalBlocks
 {
     internal static class StringBuilderExtension
     {
@@ -14,7 +14,7 @@ namespace PoshCode
             builder.Append(color.ToVtEscapeSequence(background));
         }
 
-        public static void AppendTo(this TerminalPosition position, StringBuilder builder)
+        public static void AppendTo(this Position position, StringBuilder builder)
         {
             builder.Append(position);
         }

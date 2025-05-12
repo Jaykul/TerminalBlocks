@@ -5,5 +5,5 @@ function Test-Elevation {
     #>
     [CmdletBinding()]
     param()
-    [PoshCode.TerminalBlock]::Elevated
+    [PoshCode.TerminalBlocks.Block]::Elevated
 }

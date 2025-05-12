@@ -12,7 +12,7 @@ function New-TerminalBlock {
             This example shows the time elapsed executing the last command in White on a DarkBlue background, but switches the text to yellow if elevated, and the background to red on error.
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'New is not state changing!')]
-    [OutputType([PoshCode.TerminalBlock])]
+    [OutputType([PoshCode.TerminalBlocks.Block])]
     [CmdletBinding(DefaultParameterSetName = "Content")]
     [Alias("TerminalBlock", "Block")]
     param(
@@ -21,14 +21,6 @@ function New-TerminalBlock {
         [Parameter(Position = 0, ParameterSetName = "Content")] # , Mandatory=$true
         [Alias("InputObject")]
         $Content,
-
-        # A special block that outputs just a newline (with no caps, ever)
-        [Parameter(Mandatory, ParameterSetName = "Newline")]
-        [switch]$Newline,
-
-        # A special block that outputs an inverted Cap (to create gaps in PowerLine)
-        [Parameter(Mandatory, ParameterSetName = "Spacer")]
-        [switch]$Spacer,
 
         # A special block that stores the position it would have output at
         [Parameter(Mandatory, ParameterSetName = "StorePosition")]
@@ -39,21 +31,13 @@ function New-TerminalBlock {
         [switch]$RecallPosition
     )
     end {
-        switch($PSCmdlet.ParameterSetName) {
-            Newline {
-                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::NewLine
-                $null = $PSBoundParameters.Remove("Newline")
-            }
-            Spacer {
-                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::Spacer
-                $null = $PSBoundParameters.Remove("Spacer")
-            }
+        switch ($PSCmdlet.ParameterSetName) {
             StorePosition {
-                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::StorePosition
+                $PSBoundParameters["Content"] = [PoshCode.TerminalBlocks.SpecialBlock]::StorePosition
                 $null = $PSBoundParameters.Remove("StorePosition")
             }
             RecallPosition {
-                $PSBoundParameters["Content"] = [PoshCode.SpecialBlock]::RecallPosition
+                $PSBoundParameters["Content"] = [PoshCode.TerminalBlocks.SpecialBlock]::RecallPosition
                 $null = $PSBoundParameters.Remove("RecallPosition")
             }
         }
@@ -63,7 +47,7 @@ function New-TerminalBlock {
             $PSBoundParameters["Content"] = [ScriptBlock]::Create($Content.Substring(1, $Content.Length - 2))
         } elseif (@($Content).Count -gt 1) {
             $PSBoundParameters["Content"] = @(
-                foreach($item in $Content) {
+                foreach ($item in $Content) {
                     if ($item -is [string] -and $item[0] -eq '{' -and $item[-1] -eq '}') {
                         [ScriptBlock]::Create($item.Substring(1, $item.Length - 2))
                     } else {
@@ -74,10 +58,10 @@ function New-TerminalBlock {
         }
 
         # Strip common parameters if they're on here (so we can use -Verbose)
-        foreach($name in [System.Management.Automation.PSCmdlet]::CommonParameters) {
+        foreach ($name in [System.Management.Automation.PSCmdlet]::CommonParameters) {
             $null = $PSBoundParameters.Remove($name)
         }
 
-        [PoshCode.TerminalBlock]$PSBoundParameters
+        [PoshCode.TerminalBlocks.Block]$PSBoundParameters
     }
 }

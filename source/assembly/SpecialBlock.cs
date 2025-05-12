@@ -1,6 +1,6 @@
 using System;
 
-namespace PoshCode
+namespace PoshCode.TerminalBlocks
 {
     public enum SpecialBlock
     {

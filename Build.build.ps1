@@ -1,3 +1,4 @@
+#Requires -Modules @{ ModuleName = 'ModuleBuilder'; ModuleVersion = '3.2.0' }
 <#
 .SYNOPSIS
     ./project.build.ps1

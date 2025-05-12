@@ -26,7 +26,7 @@ function Show-LastExitCode {
         [string]$NotExecutable = "&prohibited;"
     )
     # If there was an error ...
-    if (-not $? -or -not [PoshCode.TerminalBlock]::LastSuccess) {
+    if (-not $? -or -not [PoshCode.TerminalBlocks.Block]::LastSuccess) {
         # We retrieve the InvocationInfo from the most recent error using $global:error[0]
         if ($LastError = $global:error[0]) {
             # If History[-1] matches Error[0].ErrorInvocationInfo then the last error was NOT a native command
@@ -37,8 +37,8 @@ function Show-LastExitCode {
                     $NotExecutable
                 }
             } else {
-                if ([PoshCode.TerminalBlock]::LastExitCode -gt 0) {
-                    [PoshCode.TerminalBlock]::LastExitCode.ToString()
+                if ([PoshCode.TerminalBlocks.Block]::LastExitCode -gt 0) {
+                    [PoshCode.TerminalBlocks.Block]::LastExitCode.ToString()
                 } elseif ($global:LASTEXITCODE -gt 0) {
                     $global:LASTEXITCODE
                 }

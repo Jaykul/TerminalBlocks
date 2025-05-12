@@ -102,11 +102,15 @@ PrivateData = @{
         ### In addition, there are a couple new commands to expose static properties
 
         3. Add Test-Elevation - true if PowerShell is elevated
-        4. Add Test-Success - returns [PoshCode.TerminalBlock]::LastSuccess...
+        4. Add Test-Success - returns [PoshCode.TerminalBlocks.Block]::LastSuccess...
            Note that you _must_ set this in your prompt function, or it will always be $true
         5. Fix encoding bug in Show-ElapsedTime in Windows PowerShell
         '
     } # End of PSData hashtable
+    EzTheme = @{
+        Get = 'Get-TerminalBlockDefault'
+        Set = 'Set-TerminalBlockDefault'
+    }
 } # End of PrivateData hashtable
 
 # HelpInfo URI of this module

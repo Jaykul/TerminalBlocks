@@ -34,7 +34,7 @@ param(
                             [System.Management.Automation.CompletionResult]::new("'$_'", $_, "ParameterValue", $_) })
                 ))
         })]
-    [PoshCode.BlockCaps]$Caps,
+    [PoshCode.TerminalBlocks.Caps]$Caps,
 
     # The foreground color to use when the last command succeeded
     [Alias("ForegroundColor", "Fg", "DFg")]
@@ -75,17 +75,22 @@ param(
 end {
     # Support default parameter values
     $Parameters = Get-ParameterValue
-    $Parameters["Content"] = {
+
+    $Content = {
         Use-OriginalBlock
     }.GetNewClosure()
 
+    if ($Content.Ast.EndBlock.Statements.Length) {
+        $Parameters["Content"] = $Content
+    }
+
     # Strip common parameters if they're on here (so we can use -Verbose)
-    foreach ($name in @($Parameters.Keys.Where{ $_ -notin [PoshCode.TerminalBlock].GetProperties().Name })) {
+    foreach ($name in @($Parameters.Keys.Where{ $_ -notin [PoshCode.TerminalBlocks.Block].GetProperties().Name })) {
         $null = $Parameters.Remove($name)
     }
 
     # Store the InvocationInfo for serialization
     $Parameters["MyInvocation"] = [System.Management.Automation.InvocationInfo].GetProperty("ScriptPosition", [System.Reflection.BindingFlags]"Instance,NonPublic").GetValue($MyInvocation).Text
 
-    [PoshCode.TerminalBlock]$Parameters
+    [PoshCode.TerminalBlocks.Block]$Parameters
 }

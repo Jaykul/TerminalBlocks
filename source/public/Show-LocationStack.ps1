@@ -18,7 +18,7 @@ function Show-LocationStack {
         [string]$StackName = ""
     )
     end {
-        if ($depth = [PoshCode.TerminalBlock]::GlobalSessionState.Path.LocationStack($StackName).count) {
+        if ($depth = [PoshCode.TerminalBlocks.Block]::GlobalSessionState.Path.LocationStack($StackName).count) {
             if ($RepeatCharacter) {
                 $RepeatCharacter * $depth
             } elseif ($LevelStrings -and $LevelStrings.Length -ge $depth) {

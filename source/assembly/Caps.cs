@@ -2,9 +2,9 @@ using System;
 using System.Globalization;
 using System.Management.Automation;
 
-namespace PoshCode
+namespace PoshCode.TerminalBlocks
 {
-    public class BlockCaps : IEquatable<BlockCaps>, IPsMetadataSerializable
+    public class Caps : IEquatable<Caps>, IPsMetadataSerializable
     {
         public string Left { get; set; }
 
@@ -12,14 +12,14 @@ namespace PoshCode
 
         // For IPSMetadataSerializable to work
         // Also supports hashtable construction
-        public BlockCaps() {}
+        public Caps() { }
         // For string casting to work
-        public BlockCaps(string caps = null) => FromPsMetadata(caps);
+        public Caps(string caps = null) => FromPsMetadata(caps);
         // For array (of string) casting to work
-        public BlockCaps(params object[] caps) : this(LanguagePrimitives.ConvertTo<string>(caps[0]), LanguagePrimitives.ConvertTo<string>(caps[1])) { }
+        public Caps(params object[] caps) : this(LanguagePrimitives.ConvertTo<string>(caps[0]), LanguagePrimitives.ConvertTo<string>(caps[1])) { }
 
         // The only actual constructor that explicitly sets everything
-        public BlockCaps(string left, string right)
+        public Caps(string left, string right)
         {
             left = !String.IsNullOrEmpty(left) ? PoshCode.Pansies.Entities.Decode(left) : string.Empty;
             if (right == null)
@@ -46,9 +46,9 @@ namespace PoshCode
                 return (Left is null ? 0 : new StringInfo(Left).LengthInTextElements) + (Right is null ? 0 : new StringInfo(Right).LengthInTextElements);
             }
         }
-        public string this[BlockEnd end] {
+        public string this[Orientation end] {
             get {
-                if (end == BlockEnd.Left)
+                if (end == Orientation.Left)
                 {
                     return Left;
                 }
@@ -58,7 +58,7 @@ namespace PoshCode
                 }
             }
             set {
-                if (end == BlockEnd.Left)
+                if (end == Orientation.Left)
                 {
                     Left = value;
                 }
@@ -97,14 +97,14 @@ namespace PoshCode
             }
         }
 
-        public bool Equals(BlockCaps other)
+        public bool Equals(Caps other)
         {
             return this.Left.Equals(other.Left, StringComparison.Ordinal) && this.Right.Equals(other.Right, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is BlockCaps cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
+            return obj is Caps cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
         }
 
         public override int GetHashCode()
@@ -112,12 +112,12 @@ namespace PoshCode
             return (Left + Right).GetHashCode();
         }
 
-        public static bool operator ==(BlockCaps left, BlockCaps right)
+        public static bool operator ==(Caps left, Caps right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(BlockCaps left, BlockCaps right)
+        public static bool operator !=(Caps left, Caps right)
         {
             return !(left == right);
         }
