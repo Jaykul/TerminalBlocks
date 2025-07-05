@@ -24,12 +24,16 @@ filter Set-TerminalBlockDefault {
         # The caps to use for TerminalBlocks which have no explicit caps
         # NOTE: The default is "","" if you never set it
         [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias("DefaultCaps")]
         [PoshCode.TerminalBlocks.Caps]$Caps,
 
         # The separator to use for TerminalBlocks which have no explicit separator
         # NOTE: The default is a space " " if you never set it
         [Parameter(ValueFromPipelineByPropertyName)]
-        [string]$Separator
+        [Alias("DefaultSeparator")]
+        [string]$Separator,
+
+        [switch]$PassThru
     )
     if ($PSBoundParameters.ContainsKey('AutomaticBackgroundHueStep')) {
         [PoshCode.TerminalBlocks.Block]::AutomaticBackgroundHueStep = $AutomaticBackgroundHueStep
@@ -42,5 +46,9 @@ filter Set-TerminalBlockDefault {
     }
     if ($PSBoundParameters.ContainsKey('Separator')) {
         [PoshCode.TerminalBlocks.Block]::DefaultSeparator = $Separator
+    }
+
+    if ($PassThru) {
+        Get-TerminalBlockDefault
     }
 }

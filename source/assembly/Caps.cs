@@ -26,7 +26,7 @@ namespace PoshCode.TerminalBlocks
             {
                 if (left.Length > 1)
                 {
-                    Left  = char.IsSurrogate(left, 0) ? char.ConvertFromUtf32(char.ConvertToUtf32(left, 1)) : left.Substring(0, 1);
+                    Left = char.IsSurrogate(left, 0) ? char.ConvertFromUtf32(char.ConvertToUtf32(left, 1)) : left.Substring(0, 1);
                     Right = char.IsSurrogate(left, Left.Length) ? char.ConvertFromUtf32(char.ConvertToUtf32(left, Left.Length)) : left.Substring(Left.Length, 1);
                 }
                 else
@@ -41,13 +41,17 @@ namespace PoshCode.TerminalBlocks
             }
         }
 
-        public int Length {
-            get {
+        public int Length
+        {
+            get
+            {
                 return (Left is null ? 0 : new StringInfo(Left).LengthInTextElements) + (Right is null ? 0 : new StringInfo(Right).LengthInTextElements);
             }
         }
-        public string this[Orientation end] {
-            get {
+        public string this[Orientation end]
+        {
+            get
+            {
                 if (end == Orientation.Left)
                 {
                     return Left;
@@ -57,7 +61,8 @@ namespace PoshCode.TerminalBlocks
                     return Right;
                 }
             }
-            set {
+            set
+            {
                 if (end == Orientation.Left)
                 {
                     Left = value;
@@ -120,6 +125,11 @@ namespace PoshCode.TerminalBlocks
         public static bool operator !=(Caps left, Caps right)
         {
             return !(left == right);
+        }
+
+        public override string ToString()
+        {
+            return "Left: " + Left + " Right: " + Right;
         }
     }
 }

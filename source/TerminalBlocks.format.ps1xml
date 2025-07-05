@@ -75,5 +75,75 @@
         </TableRowEntries>
       </TableControl>
     </View>
+    <View>
+      <Name>Defaults</Name>
+      <ViewSelectedBy>
+        <TypeName>PoshCode.TerminalBlocks.Defaults</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Width>16</Width>
+            <Label>DefaultSeparator</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Width>11</Width>
+            <Label>DefaultCaps</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Width>29</Width>
+            <Label>FirstAutomaticBackgroundColor</Label>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Width>26</Width>
+            <Label>AutomaticBackgroundHueStep</Label>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>DefaultSeparator</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>
+                  $_.DefaultCaps.Left + "`e[7m...`e[0m" + $_.DefaultCaps.Right
+                </ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>
+                  if ($null -eq $_.FirstAutomaticBackgroundColor) {
+                    "None"
+                  } else {
+                    -join @(
+                      $_.FirstAutomaticBackgroundColor.ToVtEscapeSequence($true)
+                      " "
+                      $_.FirstAutomaticBackgroundColor.ToString()
+                      " $([char]27)[0m"
+                    )
+                  }
+                </ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>
+                  if ($null -eq $_.FirstAutomaticBackgroundColor) {
+                    ""
+                  } else {
+                    -join @(
+                      $_.AutomaticBackgroundHueStep
+                      ": "
+                      foreach($color in [PoshCode.Pansies.Gradient]::GetRainbow($_.FirstAutomaticBackgroundColor, 10, $_.AutomaticBackgroundHueStep, 0, 0)) {
+                        $color.ToVtEscapeSequence($true)
+                        " $([char]27)[0m "
+                      }
+                    )
+                  }
+                </ScriptBlock>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
   </ViewDefinitions>
 </Configuration>
