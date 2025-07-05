@@ -572,7 +572,7 @@ namespace PoshCode.TerminalBlocks
         public override string ToString() => ToString(null, null, null);
         public string ToString(object cacheKey) => ToString(null, null, cacheKey);
 
-        // Actually rendering requires the previous and next background colors for rendering "powerline-style" caps
+        // Rendering requires the leftBackground and rightBackground if we want powerline-style caps as separators
         public string ToString(RgbColor leftBackground, RgbColor rightBackground, object cacheKey = null)
         {
             var content = Invoke(cacheKey);
@@ -584,13 +584,40 @@ namespace PoshCode.TerminalBlocks
             var background = BackgroundColor;
             var foreground = ForegroundColor;
 
-            // If we're automatic background colors, we can leave the left and right backgrounds null because we calculate them in here!
-            // we lost the ability (and the need) to know (externally) the leftBackground and rightBackground colors.
-            if (leftBackground == _automaticColor && __lastAutomaticBackgroundColor != null)
+            // If the background is not set and we have not calculated any colors
+            if (null == background && __firstAutomaticBackgroundColor != null)
+            {
+                // Reset the color if the history ID changed
+                if (__automaticBackgroundColorsHistoryId != __historyId)
+                {
+                    __nextAutomaticBackgroundColor = __firstAutomaticBackgroundColor;
+                    __automaticBackgroundColorsHistoryId = __historyId;
+                    __lastAutomaticBackgroundColor = _defaultColor;
+                }
+                // set the background to the next automatic color
+                background = __nextAutomaticBackgroundColor;
+                // If we changed the background and the foreground isn't explicitly set, change it for readability
+                if (null == foreground)
+                {
+                    foreground = background.GetComplement(false, true);
+                }
+                // If the left background color is "automatic" update it before we change the __last
+                if (leftBackground == _automaticColor)
+                {
+                    leftBackground = __lastAutomaticBackgroundColor;
+                }
+                __lastAutomaticBackgroundColor = __nextAutomaticBackgroundColor;
+                // and then calculate a new next color
+                __nextAutomaticBackgroundColor = Gradient.GetRainbow(background, 1, hueStep: AutomaticBackgroundHueStep, lightStep: 0).First();
+            }
+            // If the left background color is "automatic" update it even if we're not generating a new automatic color
+            else if (leftBackground == _automaticColor)
             {
                 leftBackground = __lastAutomaticBackgroundColor;
             }
-            if (rightBackground == _automaticColor && __nextAutomaticBackgroundColor != null)
+
+            // If the right background color is "automatic" update it
+            if (rightBackground == _automaticColor)
             {
                 rightBackground = __nextAutomaticBackgroundColor;
             }
@@ -621,26 +648,6 @@ namespace PoshCode.TerminalBlocks
                         return "\u001b[u";
                     case SpecialBlock.NewLine:
                         return "\n";
-                }
-            }
-
-            if (null == background && __firstAutomaticBackgroundColor != null)
-            {
-                // Reset the color if the history ID changed
-                if (__automaticBackgroundColorsHistoryId != __historyId)
-                {
-                    __nextAutomaticBackgroundColor = __firstAutomaticBackgroundColor;
-                    __automaticBackgroundColorsHistoryId = __historyId;
-                }
-
-                // Use the color, and then pick a new one for next time
-                background = __lastAutomaticBackgroundColor = __nextAutomaticBackgroundColor;
-                __nextAutomaticBackgroundColor = Gradient.GetRainbow(background, 1, hueStep: AutomaticBackgroundHueStep, lightStep: 0).First();
-
-                // If we changed the background and the foreground isn't explicitly set, change it for readability
-                if (null == foreground)
-                {
-                    foreground = background.GetComplement(false, true);
                 }
             }
 
