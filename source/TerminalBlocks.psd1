@@ -82,8 +82,10 @@ PrivateData = @{
         ReleaseNotes = '
         ## 2.0.0
 
-        - New blocks: HostName, UserName, Version, ExONamespace, CondaContext, LocationStack, JobOutput
-        - New features in blocks: Date (UTC), KubeContext (Namespace),
+        - Automatic background colors for blocks (just Hue rotation)
+        - New blocks: HostName, UserName, Version, ExONamespace, CondaContext, LocationStack, JobOutput, CPUName, GPUName, Memory, Weather, etc.
+        - Added a "Fetch" example because we can do everything Fetch does 😉
+        - New features in existing blocks: Date (UTC), KubeContext (Namespace), AzureContext (Subscription Name Mapping), ElapsedTime (Autoformat)
         - Throw out the idea of using right-aligned blocks.
         - Improve serialization to make this work better with PowerLine and EzTheme
         - Better Prompt Examples
