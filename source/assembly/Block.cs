@@ -480,6 +480,8 @@ namespace PoshCode.TerminalBlocks
                 return Cache;
             }
 
+            UpdateSuccess();
+
             // SpecialBlock don't need to be rendered or affixed
             if (Content is SpecialBlock)
             {
