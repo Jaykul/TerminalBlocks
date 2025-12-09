@@ -7,7 +7,11 @@ function Show-AzureContext {
 
         # Force imports the module if it's not imported
         # By default, this block only renders when Az.Accounts is imported.
-        [switch]$Force
+        [switch]$Force,
+
+        # Only shows the subscription name
+        # By default: <SubscriptionName> (<SubscriptionId>) - <AccountId> - <TenantId>
+        [switch]$SubscriptionNameOnly
     )
     begin {
         # Force a default prefix
@@ -16,7 +20,9 @@ function Show-AzureContext {
     end {
         if ($Force -or (Get-Module Az.Accounts)) {
             if (($Context = Get-AzContext)) {
-                $Context.Name
+                if ($SubscriptionNameOnly) {
+                    $Context.Subscription.Name
+                } else { $Context.Name }
             }
         }
     }
