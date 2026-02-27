@@ -9,6 +9,6 @@ function Show-Palette {
     [OutputType([string])]
     [CmdletBinding()]
     param()
-    "`e[40m   `e[41m   `e[42m   `e[43m   `e[44m   `e[45m   `e[46m   `e[47m   `e[0m"
-    "`e[100m   `e[101m   `e[102m   `e[103m   `e[104m   `e[105m   `e[106m   `e[107m   `e[0m"
+    "${bg:Black}   ${bg:DarkRed}   ${bg:DarkGreen}   ${bg:DarkYellow}   ${bg:DarkBlue}   ${bg:DarkMagenta}   ${bg:DarkCyan}   ${bg:Gray}   ${bg:clear}"
+    "${bg:DarkGray}   ${bg:Red}   ${bg:Green}   ${bg:Yellow}   ${bg:Blue}   ${bg:Magenta}   ${bg:Cyan}   ${bg:White}   ${bg:clear}"
 }
