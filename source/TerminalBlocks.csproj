@@ -9,6 +9,7 @@
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <LangVersion>13.0</LangVersion>
+    <IsPublishable>true</IsPublishable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
@@ -16,14 +17,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
   </PropertyGroup>
-  <ItemGroup>
-    <!-- I wouldn't want to double-compile the stuff in here -->
-    <Compile Remove="lib\**" />
-    <!-- My output folders start with numbers. Make sure we don't "build" them -->
-    <Compile Remove="0*\**;1*\**;2*\**;3*\**;4*\**;5*\**;6*\**;7*\**;8*\**;9*\**" />
-    <EmbeddedResource Remove="0*\**;1*\**;2*\**;3*\**;4*\**;5*\**;6*\**;7*\**;8*\**;9*\**" />
-    <None Remove="0*\**;1*\**;2*\**;3*\**;4*\**;5*\**;6*\**;7*\**;8*\**;9*\**" />
-  </ItemGroup>
   <ItemGroup>
     <!-- We are only referencing these for compiling, at runtime, they're part of PowerShell -->
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" PrivateAssets="All" />

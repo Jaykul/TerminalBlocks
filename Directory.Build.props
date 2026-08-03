@@ -1,0 +1,44 @@
+<Project>
+  <!--
+      Environment variables can be used to override this configuration:
+      IB_OUTPUT_ROOT as a default RootOutputPath
+      IB_TARGET_RUNTIME as a default RuntimeIdentifier (for containerization)
+    -->
+  <PropertyGroup>
+    <!-- Common Metadata -->
+    <Authors>Jaykul@HuddledMasses.org</Authors>
+    <Company>PoshCode</Company>
+
+    <!-- The SolutionName needs a default value because it's used in the RootOutputPath. -->
+    <SolutionName Condition="'$(SolutionName)' == ''">Library</SolutionName>
+    <RootOutputPath Condition="'$(IB_OUTPUT_ROOT)' == ''">$([MSBuild]::NormalizeDirectory($(MSBuildThisFileDirectory), "Output"))</RootOutputPath>
+    <!--
+      DO NOT CHANGE THESE OUTPUT PATHS CONTROLLED BY IB_OUTPUT_ROOT
+      THE RELATIVE SUBDIRECTORIES ARE CONVENTIONS USED BY THE BUILD PIPELINES
+    -->
+    <RootOutputPath Condition="'$(IB_OUTPUT_ROOT)' != ''">$([MSBuild]::NormalizeDirectory($(IB_OUTPUT_ROOT)))</RootOutputPath>
+    <BaseOutputPath>$([MSBuild]::NormalizeDirectory($(RootOutputPath), $(SolutionName), "bin", $(MSBuildProjectName)))</BaseOutputPath>
+    <BaseIntermediateOutputPath>$([MSBuild]::NormalizeDirectory($(RootOutputPath), $(SolutionName), "obj", $(MSBuildProjectName)))</BaseIntermediateOutputPath>
+    <PublishDir>$([MSBuild]::NormalizeDirectory($(RootOutputPath), "publish", $(MSBuildProjectName)))</PublishDir>
+    <ContainerArchiveDir>$([MSBuild]::NormalizeDirectory($(RootOutputPath), "containers"))</ContainerArchiveDir>
+
+    <!-- Supports setting the runtime identifier and configuration without passing them explicitly to each build -->
+    <RuntimeIdentifier Condition="'$(IB_TARGET_RUNTIME)' != ''">$(IB_TARGET_RUNTIME)</RuntimeIdentifier>
+    <Configuration Condition="'$(IB_CONFIGURATION)' != ''">$(IB_CONFIGURATION)</Configuration>
+    <ContainerRuntimeIdentifier>$(RuntimeIdentifier)</ContainerRuntimeIdentifier>
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+
+    <!-- Default settings for container images -->
+    <!--
+    <ContainerBaseImage>ghcr.io/poshcode/aspnet:8.0</ContainerBaseImage>
+    <ContainerRegistry>ghcr.io/poshcode</ContainerRegistry>
+    <ContainerWorkingDirectory>/app/</ContainerWorkingDirectory>
+    <PackageProjectUrl>https://github.com/PoshCode/LD.EnterprisePlatformServices.API</PackageProjectUrl>
+    -->
+
+    <!-- Default Packable/Publishable to false because we can pack/publish the whole solution -->
+    <!-- Each project that needs to be packable/publishable should override these values -->
+    <IsPackable>False</IsPackable>
+    <IsPublishable>False</IsPublishable>
+  </PropertyGroup>
+</Project>

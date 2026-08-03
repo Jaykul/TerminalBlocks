@@ -1,0 +1,17 @@
+<Project>
+
+  <PropertyGroup>
+    <!--
+      ContainerRepository must be set in the csproj to get a ContainerImage
+      This property calculated based on that one, must come last (in build.targets, not build.props)
+    -->
+    <ContainerArchiveOutputPath Condition="'$(ContainerRepository)' != ''">
+      $(ContainerArchiveDir)$(ContainerRepository)-$(Version).tgz</ContainerArchiveOutputPath>
+  </PropertyGroup>
+
+  <!-- We can only publish containers for linux-x64 (because of our base image) -->
+  <Target Name="PublishContainerAfterPublish" AfterTargets="Publish"
+    Condition="'$(ContainerRepository)' != '' And '$(RuntimeIdentifier)' == 'linux-x64'">
+    <CallTarget Targets="PublishContainer" />
+  </Target>
+</Project>
