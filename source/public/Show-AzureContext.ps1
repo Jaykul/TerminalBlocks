@@ -2,8 +2,8 @@ function Show-AzureContext {
     [Alias("AzureContextBlock","New-AzureContextBlock")]
     [CmdletBinding()]
     param(
-        # A string to show before the output. Defaults to "${fg:32aee7}${nf:md-microsoft_azure} ${fg:clear}"
-        $Prefix = "$fg:32aee7${nf:md-microsoft_azure} ${fg:clear}",
+        # A string to show before the output. Defaults to "${fg:32aee7}${nf:md-microsoft_azure} ${fg:Default}"
+        $Prefix = "${fg:32aee7}${nf:md-microsoft_azure} ${fg:Default}",
 
         # A hashtable of Subscription Ids to the desired text to show.
         [hashtable]$SubscriptionNames,

@@ -9,7 +9,7 @@
     [CmdletBinding(DefaultParameterSetName = "SimpleFormat")]
     param(
         # A string to show before the output.
-        [string]$Prefix = "&stopwatch;",
+        [string]$Prefix = "${emoji:stopwatch}",
 
         # A Timespan format pattern such as "{0:ss\.fff}" defaults to "{0:d\d\ h\:mm\:ss\.fff}"
         # See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings

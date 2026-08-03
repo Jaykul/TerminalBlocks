@@ -5,8 +5,8 @@ function Show-DockerContext {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output. Defaults to "&whale;"
-        [string]$Prefix = "&whale; "
+        # A string to show before the output. Defaults to "${emoji:whale}"
+        [string]$Prefix = "${emoji:whale} "
     )
     if (Get-Command docker) {
         if (($Context = docker context show)) {

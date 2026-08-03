@@ -7,8 +7,8 @@ function Show-CondaContext {
     #>
     [CmdletBinding()]
     param(
-        # A string to show before the output. Defaults to "&nf-dev-python; "
-        [string]$Prefix = "&nf-dev-python; "
+        # A string to show before the output. Defaults to "${nf:dev-python} "
+        [string]$Prefix = "${nf:dev-python} "
     )
     $Env:CONDA_PROMPT_MODIFIER
 }
